@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -13,6 +15,8 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@DynamicInsert
+@DynamicUpdate
 public class Homestay {
     
     @Id
@@ -37,7 +41,8 @@ public class Homestay {
     @Column(name = "lat")
     private Double lat;
     
-    @Column(name = "long")
+    // Column name `long` is reserved keyword, use backticks so Hibernate quotes it.
+    @Column(name = "`long`")
     private Double longitude;
     
     @Column(name = "capacity")
@@ -56,7 +61,7 @@ public class Homestay {
     private String amenities;
     
     @Column(name = "status")
-    private Byte status; // 0:draft, 1:chờ duyệt, 2:công khai, 3:tạm ẩn, 4:bị khóa
+    private Byte status;
     
     @Column(name = "approved_by")
     private Long approvedBy;
@@ -64,12 +69,12 @@ public class Homestay {
     @Column(name = "approved_at")
     private LocalDateTime approvedAt;
     
-    @Column(name = "created_at")
+    @Column(name = "created_at", updatable = false, insertable = false)
     private LocalDateTime createdAt;
     
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", insertable = false)
     private LocalDateTime updatedAt;
     
-    @Column(name = "is_deleted")
+    @Column(name = "is_deleted", insertable = false)
     private Boolean isDeleted;
 }

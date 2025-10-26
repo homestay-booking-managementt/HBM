@@ -1,5 +1,6 @@
 package hbm.homestayservice.controller;
 
+import hbm.homestayservice.dto.CreateHomestayRequest;
 import hbm.homestayservice.dto.HomestayDTO;
 import hbm.homestayservice.service.HomestayService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +52,40 @@ public class HomestayController {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
             errorResponse.put("message", "Lỗi khi lấy danh sách homestay: " + e.getMessage());
+            errorResponse.put("data", null);
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+    
+    /**
+     * API tạo homestay mới
+     * POST http://localhost:8082/api/homestays
+     * 
+     * Request Body: JSON object chứa thông tin homestay
+     */
+    @PostMapping("/homestays")
+    public ResponseEntity<Map<String, Object>> createHomestay(@RequestBody CreateHomestayRequest request) {
+        try {
+            HomestayDTO createdHomestay = homestayService.createHomestay(request);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Tạo homestay thành công. Homestay đang chờ admin duyệt.");
+            response.put("data", createdHomestay);
+            
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (IllegalArgumentException e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", e.getMessage());
+            errorResponse.put("data", null);
+            
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Lỗi khi tạo homestay: " + e.getMessage());
             errorResponse.put("data", null);
             
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
