@@ -1,7 +1,9 @@
 package hbm.homestayservice.controller;
 
+import hbm.homestayservice.dto.AdminUpdateStatusRequest;
 import hbm.homestayservice.dto.CreateHomestayRequest;
 import hbm.homestayservice.dto.HomestayDTO;
+import hbm.homestayservice.dto.UpdateHomestayStatusRequest;
 import hbm.homestayservice.service.HomestayService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -124,6 +126,115 @@ public class HomestayController {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
             errorResponse.put("message", "Lỗi khi lấy danh sách homestay: " + e.getMessage());
+            errorResponse.put("data", null);
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+    
+    /**
+     * API chuyển đổi trạng thái homestay
+     * PATCH http://localhost:8082/api/homestays/{id}/status
+     * 
+     * Path Variable:
+     * - id: ID của homestay
+     * 
+     * Query Parameters:
+     * - userId: ID của chủ nhà (bắt buộc)
+     * 
+     * Request Body:
+     * {
+     *   "status": 2  // 2: công khai, 3: tạm ẩn, 4: bị khóa
+     * }
+     */
+    @PatchMapping("/homestays/{id}/status")
+    public ResponseEntity<Map<String, Object>> updateHomestayStatus(
+            @PathVariable Long id,
+            @RequestParam Long userId,
+            @RequestBody UpdateHomestayStatusRequest request
+    ) {
+        try {
+            HomestayDTO updatedHomestay = homestayService.updateHomestayStatus(id, userId, request);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Cập nhật trạng thái homestay thành công");
+            response.put("data", updatedHomestay);
+            
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", e.getMessage());
+            errorResponse.put("data", null);
+            
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Lỗi khi cập nhật trạng thái homestay: " + e.getMessage());
+            errorResponse.put("data", null);
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+    
+    /**
+     * API cho Admin duyệt/khóa homestay
+     * PATCH http://localhost:8082/api/admin/homestays/{id}/status
+     * 
+     * Path Variable:
+     * - id: ID của homestay
+     * 
+     * Query Parameters:
+     * - adminId: ID của admin (bắt buộc)
+     * 
+     * Request Body:
+     * {
+     *   "status": 2,  // 2: duyệt & công khai, 3: tạm ẩn, 4: bị khóa
+     *   "reason": "Vi phạm chính sách" // optional, lý do khóa/ẩn
+     * }
+     */
+    @PatchMapping("/admin/homestays/{id}/status")
+    public ResponseEntity<Map<String, Object>> adminUpdateHomestayStatus(
+            @PathVariable Long id,
+            @RequestParam Long adminId,
+            @RequestBody AdminUpdateStatusRequest request
+    ) {
+        try {
+            HomestayDTO updatedHomestay = homestayService.adminUpdateStatus(id, adminId, request);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            
+            String message;
+            if (request.getStatus() == 2) {
+                message = "Duyệt và công khai homestay thành công";
+            } else if (request.getStatus() == 3) {
+                message = "Tạm ẩn homestay thành công";
+            } else {
+                message = "Khóa homestay thành công";
+            }
+            
+            if (request.getReason() != null && !request.getReason().isEmpty()) {
+                message += ". Lý do: " + request.getReason();
+            }
+            
+            response.put("message", message);
+            response.put("data", updatedHomestay);
+            
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", e.getMessage());
+            errorResponse.put("data", null);
+            
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Lỗi khi cập nhật trạng thái homestay: " + e.getMessage());
             errorResponse.put("data", null);
             
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);

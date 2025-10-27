@@ -1,7 +1,9 @@
 package hbm.homestayservice.service;
 
+import hbm.homestayservice.dto.AdminUpdateStatusRequest;
 import hbm.homestayservice.dto.CreateHomestayRequest;
 import hbm.homestayservice.dto.HomestayDTO;
+import hbm.homestayservice.dto.UpdateHomestayStatusRequest;
 import hbm.homestayservice.entity.Homestay;
 import hbm.homestayservice.repository.HomestayRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -85,6 +88,102 @@ public class HomestayService {
         return homestays.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
+    }
+    
+    /**
+     * Chuyển đổi trạng thái homestay (chỉ chủ nhà mới được thay đổi homestay của mình)
+     * Status: 2 = công khai, 3 = tạm ẩn, 4 = bị khóa
+     */
+    @Transactional
+    public HomestayDTO updateHomestayStatus(Long homestayId, Long userId, UpdateHomestayStatusRequest request) {
+        // Validate
+        if (homestayId == null) {
+            throw new IllegalArgumentException("Homestay ID không được để trống");
+        }
+        
+        if (userId == null) {
+            throw new IllegalArgumentException("User ID không được để trống");
+        }
+        
+        if (request.getStatus() == null) {
+            throw new IllegalArgumentException("Status không được để trống");
+        }
+        
+        // Kiểm tra status hợp lệ (2, 3, 4)
+        if (request.getStatus() < 2 || request.getStatus() > 4) {
+            throw new IllegalArgumentException("Status không hợp lệ. Chỉ cho phép: 2 (công khai), 3 (tạm ẩn), 4 (bị khóa)");
+        }
+        
+        // Tìm homestay
+        Homestay homestay = homestayRepository.findById(homestayId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy homestay"));
+        
+        // Kiểm tra quyền sở hữu
+        if (!homestay.getUserId().equals(userId)) {
+            throw new IllegalArgumentException("Bạn không có quyền chỉnh sửa homestay này");
+        }
+        
+        // Kiểm tra homestay đã bị xóa chưa
+        if (homestay.getIsDeleted()) {
+            throw new IllegalArgumentException("Homestay đã bị xóa");
+        }
+        
+        // Cập nhật status
+        homestay.setStatus(request.getStatus());
+        
+        // Lưu thay đổi
+        Homestay updatedHomestay = homestayRepository.save(homestay);
+        
+        return convertToDTO(updatedHomestay);
+    }
+    
+    /**
+     * Admin duyệt/khóa homestay
+     * Status: 2 = duyệt & công khai, 3 = tạm ẩn, 4 = bị khóa
+     * Chỉ admin mới được phép gọi API này
+     */
+    @Transactional
+    public HomestayDTO adminUpdateStatus(Long homestayId, Long adminId, AdminUpdateStatusRequest request) {
+        // Validate
+        if (homestayId == null) {
+            throw new IllegalArgumentException("Homestay ID không được để trống");
+        }
+        
+        if (adminId == null) {
+            throw new IllegalArgumentException("Admin ID không được để trống");
+        }
+        
+        if (request.getStatus() == null) {
+            throw new IllegalArgumentException("Status không được để trống");
+        }
+        
+        // Kiểm tra status hợp lệ (2, 3, 4)
+        if (request.getStatus() < 2 || request.getStatus() > 4) {
+            throw new IllegalArgumentException("Status không hợp lệ. Admin chỉ cho phép: 2 (duyệt & công khai), 3 (tạm ẩn), 4 (bị khóa)");
+        }
+        
+        // Tìm homestay
+        Homestay homestay = homestayRepository.findById(homestayId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy homestay"));
+        
+        // Kiểm tra homestay đã bị xóa chưa
+        if (homestay.getIsDeleted()) {
+            throw new IllegalArgumentException("Homestay đã bị xóa");
+        }
+        
+        // Cập nhật status
+        homestay.setStatus(request.getStatus());
+        
+        // Nếu admin duyệt (status = 2), cập nhật approved_by và approved_at
+        if (request.getStatus() == 2) {
+            homestay.setApprovedBy(adminId);
+            homestay.setApprovedAt(LocalDateTime.now());
+        }
+        
+        // Lưu thay đổi
+        Homestay updatedHomestay = homestayRepository.save(homestay);
+        
+        return convertToDTO(updatedHomestay);
     }
     
     /**
