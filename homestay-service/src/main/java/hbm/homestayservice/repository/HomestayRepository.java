@@ -29,4 +29,10 @@ public interface HomestayRepository extends JpaRepository<Homestay, Long> {
             @Param("checkIn") LocalDate checkIn,
             @Param("checkOut") LocalDate checkOut
     );
+    
+    /**
+     * Lấy danh sách homestay của chủ nhà (theo user_id)
+     */
+    @Query("SELECT h FROM Homestay h WHERE h.userId = :userId AND h.isDeleted = false ORDER BY h.createdAt DESC")
+    List<Homestay> findByUserId(@Param("userId") Long userId);
 }

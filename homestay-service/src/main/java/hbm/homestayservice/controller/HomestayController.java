@@ -91,4 +91,42 @@ public class HomestayController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
+    
+    /**
+     * API lấy danh sách homestay của chủ nhà hiện tại
+     * GET http://localhost:8082/api/homestays/mine
+     * 
+     * Query Parameters:
+     * - userId: ID của chủ nhà (bắt buộc)
+     */
+    @GetMapping("/homestays/mine")
+    public ResponseEntity<Map<String, Object>> getMyHomestays(
+            @RequestParam Long userId
+    ) {
+        try {
+            List<HomestayDTO> homestays = homestayService.getMyHomestays(userId);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Danh sách homestay của bạn");
+            response.put("data", homestays);
+            response.put("total", homestays.size());
+            
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", e.getMessage());
+            errorResponse.put("data", null);
+            
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Lỗi khi lấy danh sách homestay: " + e.getMessage());
+            errorResponse.put("data", null);
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
 }

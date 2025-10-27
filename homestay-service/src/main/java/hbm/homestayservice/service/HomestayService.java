@@ -74,6 +74,20 @@ public class HomestayService {
     }
     
     /**
+     * Lấy danh sách homestay của chủ nhà hiện tại
+     */
+    public List<HomestayDTO> getMyHomestays(Long userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("User ID không được để trống");
+        }
+        
+        List<Homestay> homestays = homestayRepository.findByUserId(userId);
+        return homestays.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+    
+    /**
      * Chuyển đổi Entity sang DTO
      */
     private HomestayDTO convertToDTO(Homestay homestay) {
