@@ -1,8 +1,9 @@
 package hbm.homestayservice.controller;
 
-import hbm.homestayservice.dto.AdminUpdateStatusRequest;
 import hbm.homestayservice.dto.CreateHomestayRequest;
 import hbm.homestayservice.dto.HomestayDTO;
+import hbm.homestayservice.dto.HomestayPendingDTO;
+import hbm.homestayservice.dto.UpdateHomestayRequest;
 import hbm.homestayservice.dto.UpdateHomestayStatusRequest;
 import hbm.homestayservice.service.HomestayService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -180,48 +181,37 @@ public class HomestayController {
     }
     
     /**
-     * API cho Admin duyệt/khóa homestay
-     * PATCH http://localhost:8082/api/admin/homestays/{id}/status
+     * API host gửi yêu cầu cập nhật thông tin homestay
+     * POST http://localhost:8082/api/homestays/{id}/update-request?userId={userId}
      * 
-     * Path Variable:
-     * - id: ID của homestay
-     * 
-     * Query Parameters:
-     * - adminId: ID của admin (bắt buộc)
-     * 
-     * Request Body:
+     * Body (JSON):
      * {
-     *   "status": 2,  // 2: duyệt & công khai, 3: tạm ẩn, 4: bị khóa
-     *   "reason": "Vi phạm chính sách" // optional, lý do khóa/ẩn
+     *   "name": "Homestay ABC Updated",
+     *   "description": "Mô tả mới",
+     *   "address": "Địa chỉ mới",
+     *   "city": "Đà Nẵng",
+     *   "lat": 16.0544,
+     *   "longitude": 108.2022,
+     *   "capacity": 6,
+     *   "numRooms": 3,
+     *   "bathroomCount": 2,
+     *   "basePrice": 800000,
+     *   "amenities": "{\"wifi\": true, \"parking\": true}"
      * }
      */
-    @PatchMapping("/admin/homestays/{id}/status")
-    public ResponseEntity<Map<String, Object>> adminUpdateHomestayStatus(
+    @PostMapping("/homestays/{id}/update-request")
+    public ResponseEntity<Map<String, Object>> requestUpdateHomestay(
             @PathVariable Long id,
-            @RequestParam Long adminId,
-            @RequestBody AdminUpdateStatusRequest request
+            @RequestParam Long userId,
+            @RequestBody UpdateHomestayRequest request
     ) {
         try {
-            HomestayDTO updatedHomestay = homestayService.adminUpdateStatus(id, adminId, request);
+            HomestayPendingDTO pending = homestayService.requestUpdateHomestay(id, userId, request);
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            
-            String message;
-            if (request.getStatus() == 2) {
-                message = "Duyệt và công khai homestay thành công";
-            } else if (request.getStatus() == 3) {
-                message = "Tạm ẩn homestay thành công";
-            } else {
-                message = "Khóa homestay thành công";
-            }
-            
-            if (request.getReason() != null && !request.getReason().isEmpty()) {
-                message += ". Lý do: " + request.getReason();
-            }
-            
-            response.put("message", message);
-            response.put("data", updatedHomestay);
+            response.put("message", "Yêu cầu cập nhật homestay đã được gửi, đang chờ admin duyệt");
+            response.put("data", pending);
             
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
@@ -234,7 +224,7 @@ public class HomestayController {
         } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
-            errorResponse.put("message", "Lỗi khi cập nhật trạng thái homestay: " + e.getMessage());
+            errorResponse.put("message", "Lỗi khi tạo yêu cầu cập nhật: " + e.getMessage());
             errorResponse.put("data", null);
             
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
