@@ -1,11 +1,16 @@
 package hbm.homestayservice.service;
 
-import hbm.homestayservice.dto.AdminUpdateStatusRequest;
 import hbm.homestayservice.dto.CreateHomestayRequest;
 import hbm.homestayservice.dto.HomestayDTO;
+import hbm.homestayservice.dto.HomestayPendingDTO;
+import hbm.homestayservice.dto.UpdateHomestayRequest;
 import hbm.homestayservice.dto.UpdateHomestayStatusRequest;
 import hbm.homestayservice.entity.Homestay;
+import hbm.homestayservice.entity.HomestayPending;
+import hbm.homestayservice.repository.HomestayPendingRepository;
 import hbm.homestayservice.repository.HomestayRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +26,12 @@ public class HomestayService {
     
     @Autowired
     private HomestayRepository homestayRepository;
+    
+    @Autowired
+    private HomestayPendingRepository homestayPendingRepository;
+    
+    @Autowired
+    private ObjectMapper objectMapper;
     
     /**
      * Lấy danh sách homestay công khai với các bộ lọc
@@ -138,55 +149,6 @@ public class HomestayService {
     }
     
     /**
-     * Admin duyệt/khóa homestay
-     * Status: 2 = duyệt & công khai, 3 = tạm ẩn, 4 = bị khóa
-     * Chỉ admin mới được phép gọi API này
-     */
-    @Transactional
-    public HomestayDTO adminUpdateStatus(Long homestayId, Long adminId, AdminUpdateStatusRequest request) {
-        // Validate
-        if (homestayId == null) {
-            throw new IllegalArgumentException("Homestay ID không được để trống");
-        }
-        
-        if (adminId == null) {
-            throw new IllegalArgumentException("Admin ID không được để trống");
-        }
-        
-        if (request.getStatus() == null) {
-            throw new IllegalArgumentException("Status không được để trống");
-        }
-        
-        // Kiểm tra status hợp lệ (2, 3, 4)
-        if (request.getStatus() < 2 || request.getStatus() > 4) {
-            throw new IllegalArgumentException("Status không hợp lệ. Admin chỉ cho phép: 2 (duyệt & công khai), 3 (tạm ẩn), 4 (bị khóa)");
-        }
-        
-        // Tìm homestay
-        Homestay homestay = homestayRepository.findById(homestayId)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy homestay"));
-        
-        // Kiểm tra homestay đã bị xóa chưa
-        if (homestay.getIsDeleted()) {
-            throw new IllegalArgumentException("Homestay đã bị xóa");
-        }
-        
-        // Cập nhật status
-        homestay.setStatus(request.getStatus());
-        
-        // Nếu admin duyệt (status = 2), cập nhật approved_by và approved_at
-        if (request.getStatus() == 2) {
-            homestay.setApprovedBy(adminId);
-            homestay.setApprovedAt(LocalDateTime.now());
-        }
-        
-        // Lưu thay đổi
-        Homestay updatedHomestay = homestayRepository.save(homestay);
-        
-        return convertToDTO(updatedHomestay);
-    }
-    
-    /**
      * Chuyển đổi Entity sang DTO
      */
     private HomestayDTO convertToDTO(Homestay homestay) {
@@ -207,6 +169,76 @@ public class HomestayService {
         dto.setStatus(homestay.getStatus());
         dto.setCreatedAt(homestay.getCreatedAt());
         dto.setUpdatedAt(homestay.getUpdatedAt());
+        return dto;
+    }
+    
+    /**
+     * Host tạo yêu cầu cập nhật thông tin homestay
+     * Tạo bản ghi trong homestay_pending với status = 'waiting'
+     */
+    @Transactional
+    public HomestayPendingDTO requestUpdateHomestay(Long homestayId, Long userId, UpdateHomestayRequest request) {
+        // Validate homestayId và userId
+        if (homestayId == null || homestayId <= 0) {
+            throw new IllegalArgumentException("ID homestay không hợp lệ");
+        }
+        
+        if (userId == null || userId <= 0) {
+            throw new IllegalArgumentException("ID người dùng không hợp lệ");
+        }
+        
+        // Tìm homestay
+        Homestay homestay = homestayRepository.findById(homestayId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy homestay với ID: " + homestayId));
+        
+        // Kiểm tra người dùng có phải chủ homestay không
+        if (!homestay.getUserId().equals(userId)) {
+            throw new IllegalArgumentException("Bạn không có quyền cập nhật homestay này");
+        }
+        
+        // Kiểm tra homestay có bị xóa không
+        if (Boolean.TRUE.equals(homestay.getIsDeleted())) {
+            throw new IllegalArgumentException("Homestay đã bị xóa");
+        }
+        
+        // Kiểm tra homestay có bị khóa không (status = 4)
+        if (homestay.getStatus() != null && homestay.getStatus() == 4) {
+            throw new IllegalArgumentException("Homestay đang bị khóa, không thể cập nhật");
+        }
+        
+        // Chuyển request thành JSON
+        String pendingDataJson;
+        try {
+            pendingDataJson = objectMapper.writeValueAsString(request);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Lỗi khi chuyển đổi dữ liệu thành JSON", e);
+        }
+        
+        // Tạo bản ghi homestay_pending
+        HomestayPending pending = new HomestayPending();
+        pending.setHomestayId(homestayId);
+        pending.setPendingData(pendingDataJson);
+        pending.setStatus("waiting");
+        
+        HomestayPending saved = homestayPendingRepository.save(pending);
+        
+        // Chuyển đổi sang DTO
+        return convertPendingToDTO(saved);
+    }
+    
+    /**
+     * Chuyển đổi HomestayPending entity sang DTO
+     */
+    private HomestayPendingDTO convertPendingToDTO(HomestayPending pending) {
+        HomestayPendingDTO dto = new HomestayPendingDTO();
+        dto.setId(pending.getId());
+        dto.setHomestayId(pending.getHomestayId());
+        dto.setPendingData(pending.getPendingData());
+        dto.setSubmittedAt(pending.getSubmittedAt());
+        dto.setStatus(pending.getStatus());
+        dto.setReviewedBy(pending.getReviewedBy());
+        dto.setReviewedAt(pending.getReviewedAt());
+        dto.setReason(pending.getReason());
         return dto;
     }
 }
