@@ -230,4 +230,22 @@ public class HomestayController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
+
+    @GetMapping("/homestays/{id}")
+    public ResponseEntity<Map<String, Object>> getHomestayById(@PathVariable Long id) {
+        try {
+            HomestayDTO homestay = homestayService.getHomestayById(id);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Lấy homestay thành công");
+            response.put("data", homestay);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", e.getMessage());
+            errorResponse.put("data", null);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        }
+    }
 }

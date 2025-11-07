@@ -17,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -240,5 +239,11 @@ public class HomestayService {
         dto.setReviewedAt(pending.getReviewedAt());
         dto.setReason(pending.getReason());
         return dto;
+    }
+
+    public HomestayDTO getHomestayById(Long homestayId) {
+        Homestay homestay = homestayRepository.findById(homestayId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy homestay với ID: " + homestayId));
+        return convertToDTO(homestay);
     }
 }
