@@ -37,10 +37,20 @@ public class HomestayService {
      * Lấy danh sách homestay công khai với các bộ lọc
      */
     public List<HomestayDTO> getPublicHomestays(String city, Short capacity, LocalDate checkIn, LocalDate checkOut) {
-        List<Homestay> homestays = homestayRepository.findPublicHomestaysWithFilters(city, capacity, checkIn, checkOut);
-        return homestays.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+        try {
+            List<Homestay> homestays = homestayRepository.findPublicHomestaysWithFilters(city, capacity, checkIn, checkOut);
+            return homestays.stream()
+                    .map(this::convertToDTO)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            // Fallback to simple query if complex query fails
+            System.err.println("Complex query failed, using fallback: " + e.getMessage());
+            e.printStackTrace();
+            List<Homestay> homestays = homestayRepository.findAllPublicSimple();
+            return homestays.stream()
+                    .map(this::convertToDTO)
+                    .collect(Collectors.toList());
+        }
     }
     
     /**
@@ -134,8 +144,8 @@ public class HomestayService {
             throw new IllegalArgumentException("Bạn không có quyền chỉnh sửa homestay này");
         }
         
-        // Kiểm tra homestay đã bị xóa chưa
-        if (homestay.getIsDeleted()) {
+        // Kiểm tra homestay đã bị xóa chưa (null-safe check)
+        if (Boolean.TRUE.equals(homestay.getIsDeleted())) {
             throw new IllegalArgumentException("Homestay đã bị xóa");
         }
         

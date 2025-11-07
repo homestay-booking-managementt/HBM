@@ -36,7 +36,8 @@ public class Booking {
     @Column(name = "check_out", nullable = false)
     private LocalDate checkOut;
     
-    @Column(name = "nights")
+    // Generated column: nights = DATEDIFF(check_out, check_in)
+    @Column(name = "nights", insertable = false, updatable = false)
     private Integer nights;
     
     @Column(name = "total_price", nullable = false, precision = 14, scale = 2)
