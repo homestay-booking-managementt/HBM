@@ -1,4 +1,0 @@
-jwt:
-    secretKey: QWERTYUIOPasdfghJKLzxcvbnm1234567890QWERTYUIOPasdfgh
-    accessTokenExpiration: 15
-    refreshTokenExpiration: 7
