@@ -41,8 +41,8 @@ public class Homestay {
     @Column(name = "lat")
     private Double lat;
     
-    // Map to MySQL reserved keyword column `long`. Hibernate will quote it automatically.
-    @Column(name = "long")
+    // Map to MySQL reserved keyword column `long`. Need to quote it.
+    @Column(name = "`long`")
     private Double longitude;
     
     @Column(name = "capacity")
