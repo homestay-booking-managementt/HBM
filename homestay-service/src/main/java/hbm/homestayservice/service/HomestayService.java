@@ -2,11 +2,14 @@ package hbm.homestayservice.service;
 
 import hbm.homestayservice.dto.CreateHomestayRequest;
 import hbm.homestayservice.dto.HomestayDTO;
+import hbm.homestayservice.dto.HomestayImageDTO;
 import hbm.homestayservice.dto.HomestayPendingDTO;
 import hbm.homestayservice.dto.UpdateHomestayRequest;
 import hbm.homestayservice.dto.UpdateHomestayStatusRequest;
 import hbm.homestayservice.entity.Homestay;
+import hbm.homestayservice.entity.HomestayImage;
 import hbm.homestayservice.entity.HomestayPending;
+import hbm.homestayservice.repository.HomestayImageRepository;
 import hbm.homestayservice.repository.HomestayPendingRepository;
 import hbm.homestayservice.repository.HomestayRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -17,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,6 +31,9 @@ public class HomestayService {
     
     @Autowired
     private HomestayPendingRepository homestayPendingRepository;
+    
+    @Autowired
+    private HomestayImageRepository homestayImageRepository;
     
     @Autowired
     private ObjectMapper objectMapper;
@@ -93,6 +98,18 @@ public class HomestayService {
         
         // Lưu vào database
         Homestay savedHomestay = homestayRepository.save(homestay);
+        
+        // Lưu ảnh nếu có
+        if (request.getImages() != null && !request.getImages().isEmpty()) {
+            for (CreateHomestayRequest.ImageRequest imageReq : request.getImages()) {
+                HomestayImage image = new HomestayImage();
+                image.setHomestayId(savedHomestay.getId());
+                image.setUrl(imageReq.getUrl());
+                image.setAlt(imageReq.getAlt());
+                image.setIsPrimary(imageReq.getIsPrimary() != null ? imageReq.getIsPrimary() : false);
+                homestayImageRepository.save(image);
+            }
+        }
         
         return convertToDTO(savedHomestay);
     }
@@ -179,6 +196,27 @@ public class HomestayService {
         dto.setStatus(homestay.getStatus());
         dto.setCreatedAt(homestay.getCreatedAt());
         dto.setUpdatedAt(homestay.getUpdatedAt());
+        
+        // Lấy danh sách ảnh
+        List<HomestayImage> images = homestayImageRepository.findByHomestayIdOrderByIsPrimaryDesc(homestay.getId());
+        List<HomestayImageDTO> imageDTOs = images.stream()
+                .map(this::convertImageToDTO)
+                .collect(Collectors.toList());
+        dto.setImages(imageDTOs);
+        
+        return dto;
+    }
+    
+    /**
+     * Chuyển đổi HomestayImage entity sang DTO
+     */
+    private HomestayImageDTO convertImageToDTO(HomestayImage image) {
+        HomestayImageDTO dto = new HomestayImageDTO();
+        dto.setId(image.getId());
+        dto.setUrl(image.getUrl());
+        dto.setAlt(image.getAlt());
+        dto.setIsPrimary(image.getIsPrimary());
+        dto.setCreatedAt(image.getCreatedAt());
         return dto;
     }
     
