@@ -6,6 +6,7 @@ import hbm.homestayservice.dto.HomestayPendingDTO;
 import hbm.homestayservice.dto.UpdateHomestayRequest;
 import hbm.homestayservice.dto.UpdateHomestayStatusRequest;
 import hbm.homestayservice.service.HomestayService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -19,6 +20,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
+@Slf4j
 public class HomestayController {
     
     @Autowired
@@ -42,6 +44,8 @@ public class HomestayController {
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate checkOut
     ) {
         try {
+            log.info("GET /api/homestays - city={}, capacity={}, checkIn={}, checkOut={}", 
+                     city, capacity, checkIn, checkOut);
             List<HomestayDTO> homestays = homestayService.getPublicHomestays(city, capacity, checkIn, checkOut);
             
             Map<String, Object> response = new HashMap<>();
@@ -52,6 +56,7 @@ public class HomestayController {
             
             return ResponseEntity.ok(response);
         } catch (Exception e) {
+            log.error("GET /api/homestays - ERROR", e);
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
             errorResponse.put("message", "Lỗi khi lấy danh sách homestay: " + e.getMessage());

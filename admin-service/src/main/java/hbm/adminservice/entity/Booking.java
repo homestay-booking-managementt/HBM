@@ -1,4 +1,4 @@
-package hbm.homestayservice.entity;
+package hbm.adminservice.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -23,11 +23,7 @@ public class Booking {
     @Column(name = "user_id")
     private Long userId;
     
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "homestay_id", nullable = false, insertable = false, updatable = false)
-    private Homestay homestay;
-    
-    @Column(name = "homestay_id")
+    @Column(name = "homestay_id", nullable = false)
     private Long homestayId;
     
     @Column(name = "check_in", nullable = false)
@@ -36,16 +32,15 @@ public class Booking {
     @Column(name = "check_out", nullable = false)
     private LocalDate checkOut;
     
-    // Generated column: nights = DATEDIFF(check_out, check_in)
     @Column(name = "nights", insertable = false, updatable = false)
-    private Integer nights;
+    private Integer nights; // Calculated field
     
-    @Column(name = "total_price", nullable = false, precision = 14, scale = 2)
+    @Column(name = "total_price", nullable = false)
     private BigDecimal totalPrice;
     
     @Column(name = "status")
-    private String status;
+    private String status; // pending, confirmed, cancelled, completed, etc.
     
-    @Column(name = "created_at")
+    @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 }

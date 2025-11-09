@@ -14,16 +14,16 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin")
-public class AdminPendingController {
+public class AdminPendingUpdateController {
     
     @Autowired
     private AdminPendingService adminPendingService;
     
     /**
      * API lấy danh sách yêu cầu cập nhật homestay đang chờ duyệt
-     * GET http://localhost:8083/api/admin/homestay-pending
+     * GET http://localhost:8083/api/admin/homestay-pending-update
      */
-    @GetMapping("/homestay-pending")
+    @GetMapping("/homestay-pending-update")
     public ResponseEntity<Map<String, Object>> getWaitingRequests() {
         try {
             List<HomestayPendingDTO> pendings = adminPendingService.getWaitingRequests();
@@ -47,7 +47,7 @@ public class AdminPendingController {
     
     /**
      * API admin duyệt hoặc từ chối yêu cầu cập nhật homestay
-     * POST http://localhost:8083/api/admin/homestay-pending/{id}/review?adminId={adminId}
+     * POST http://localhost:8083/api/admin/homestay-pending-update/{id}/review?adminId={adminId}
      * 
      * Body (JSON):
      * {
@@ -55,7 +55,7 @@ public class AdminPendingController {
      *   "reason": "Lý do từ chối"  // bắt buộc nếu action = "reject"
      * }
      */
-    @PostMapping("/homestay-pending/{id}/review")
+    @PostMapping("/homestay-pending-update/{id}/review")
     public ResponseEntity<Map<String, Object>> reviewPendingRequest(
             @PathVariable Long id,
             @RequestParam Long adminId,
