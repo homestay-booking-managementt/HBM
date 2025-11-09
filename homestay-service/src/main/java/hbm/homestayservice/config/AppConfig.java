@@ -12,7 +12,9 @@ public class AppConfig {
     @Bean
     public ObjectMapper objectMapper() {
         ObjectMapper mapper = new ObjectMapper();
+        // Register the JavaTimeModule explicitly
         mapper.registerModule(new JavaTimeModule());
+        // Optional: Disable writing dates as timestamps
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         return mapper;
     }

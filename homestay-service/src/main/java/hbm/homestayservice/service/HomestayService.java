@@ -289,4 +289,10 @@ public class HomestayService {
         dto.setReason(pending.getReason());
         return dto;
     }
+
+    public HomestayDTO getHomestayById(Long homestayId) {
+        Homestay homestay = homestayRepository.findById(homestayId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy homestay với ID: " + homestayId));
+        return convertToDTO(homestay);
+    }
 }
