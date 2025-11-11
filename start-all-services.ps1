@@ -33,6 +33,7 @@ Write-Host "Service ports (from application.properties/yml):" -ForegroundColor Y
 Write-Host "  - API Gateway: 8080 (debug: 5010)" -ForegroundColor White
 Write-Host "  - Auth Service: 8081 (debug: 5005)" -ForegroundColor White
 Write-Host "  - Admin Service: 8083 (debug: 5006)" -ForegroundColor White
-Write-Host "  - Homestay Service: 8084 (debug: 5008)" -ForegroundColor White
-Write-Host "  - Booking Service: (check app.properties) (debug: 5007)" -ForegroundColor White
-Write-Host "  - Review Service: (check app.properties) (debug: 5009)" -ForegroundColor White
+Write-Host "  - Homestay Service: 8082 (debug: 5008)" -ForegroundColor White
+Write-Host "  - Booking Service: 8084 (debug: 5007)" -ForegroundColor White
+Write-Host "  - Review Service: 8085 (debug: 5009)" -ForegroundColor White
+Write-Host "`nFrontend should connect to API Gateway at: http://localhost:8080" -ForegroundColor Cyan

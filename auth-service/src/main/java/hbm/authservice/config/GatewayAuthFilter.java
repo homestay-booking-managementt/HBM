@@ -9,8 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -25,7 +23,8 @@ public class GatewayAuthFilter extends OncePerRequestFilter {
     private static final String AUTH_SERVICE_PREFIX = "/auth/";
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
 
         String path = request.getRequestURI();
 
@@ -51,12 +50,10 @@ public class GatewayAuthFilter extends OncePerRequestFilter {
                     .toList();
 
             CustomUserDetails userDetails = new CustomUserDetails(email, id, rolesList);
-            UsernamePasswordAuthenticationToken authToken =
-                    new UsernamePasswordAuthenticationToken(
-                            userDetails,
-                            null, // Password là null vì đã xác thực ở Gateway
-                            authorities
-                    );
+            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                    userDetails,
+                    null, // Password là null vì đã xác thực ở Gateway
+                    authorities);
             SecurityContextHolder.getContext().setAuthentication(authToken);
         }
 
