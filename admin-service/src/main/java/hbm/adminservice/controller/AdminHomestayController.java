@@ -19,6 +19,39 @@ public class AdminHomestayController {
     private AdminHomestayService adminHomestayService;
     
     /**
+     * API lấy toàn bộ danh sách homestay (bao gồm cả homestay bị ẩn, khóa)
+     * GET http://localhost:8083/api/admin/homestays
+     * 
+     * Response:
+     * {
+     *   "success": true,
+     *   "message": "Lấy danh sách homestay thành công",
+     *   "data": [...]
+     * }
+     */
+    @GetMapping("/homestays")
+    public ResponseEntity<Map<String, Object>> getAllHomestays() {
+        try {
+            java.util.List<HomestayDTO> homestays = adminHomestayService.getAllHomestaysForAdmin();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Lấy danh sách homestay thành công");
+            response.put("data", homestays);
+            response.put("total", homestays.size());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Lỗi khi lấy danh sách homestay: " + e.getMessage());
+            errorResponse.put("data", null);
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+    
+    /**
      * API cho Admin duyệt/khóa homestay
      * PATCH http://localhost:8083/api/admin/homestays/{id}/status
      * 

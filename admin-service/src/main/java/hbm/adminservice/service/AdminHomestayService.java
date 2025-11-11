@@ -65,6 +65,17 @@ public class AdminHomestayService {
     }
     
     /**
+     * Lấy toàn bộ danh sách homestay (bao gồm cả homestay bị ẩn, khóa)
+     * Chỉ admin mới được phép xem toàn bộ
+     */
+    public java.util.List<HomestayDTO> getAllHomestaysForAdmin() {
+        java.util.List<Homestay> homestays = homestayRepository.findAllHomestaysForAdmin();
+        return homestays.stream()
+                .map(this::convertToDTO)
+                .collect(java.util.stream.Collectors.toList());
+    }
+    
+    /**
      * Chuyển đổi Entity sang DTO
      */
     private HomestayDTO convertToDTO(Homestay homestay) {
