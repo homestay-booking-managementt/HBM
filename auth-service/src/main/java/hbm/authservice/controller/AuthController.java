@@ -35,7 +35,7 @@ public class AuthController {
 
     @PostMapping("/v1/validate")
     public TokenResponse validateToken(@RequestBody TokenValidateRequest request) {
-            return authService.validateToken(request);
+        return authService.validateToken(request);
     }
 
     @GetMapping("/v1/me")

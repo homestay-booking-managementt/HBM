@@ -1,7 +1,6 @@
 package hbm.authservice.service.impl;
 
 import hbm.authservice.entity.User;
-import hbm.authservice.repository.RoleRepository;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -26,7 +25,7 @@ public class CustomUserDetails implements UserDetails {
         this.user = user;
         this.roles = roles;
         this.email = user.getEmail(); // Lấy từ entity
-        this.userId = user.getId();   // Lấy từ entity
+        this.userId = user.getId(); // Lấy từ entity
     }
 
     // Constructor MỚI cho luồng Gateway/Header
