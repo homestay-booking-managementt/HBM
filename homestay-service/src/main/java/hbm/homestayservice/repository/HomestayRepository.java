@@ -20,7 +20,7 @@ public interface HomestayRepository extends JpaRepository<Homestay, Long> {
            "AND (:city IS NULL OR h.city = :city) " +
            "AND (:capacity IS NULL OR h.capacity >= :capacity) " +
            "AND ((:checkIn IS NULL OR :checkOut IS NULL) OR " +
-           "     h.id NOT IN (SELECT b.homestay.id FROM Booking b " +
+           "     h.id NOT IN (SELECT b.homestayId FROM Booking b " +
            "                  WHERE b.checkOut > :checkIn AND b.checkIn < :checkOut " +
            "                  AND b.status IN ('confirmed', 'pending')))")
     List<Homestay> findPublicHomestaysWithFilters(
@@ -35,4 +35,10 @@ public interface HomestayRepository extends JpaRepository<Homestay, Long> {
      */
     @Query("SELECT h FROM Homestay h WHERE h.userId = :userId AND h.isDeleted = false ORDER BY h.createdAt DESC")
     List<Homestay> findByUserId(@Param("userId") Long userId);
+    
+    /**
+     * Simple test query - select all public homestays without subquery
+     */
+    @Query("SELECT h FROM Homestay h WHERE h.status = 2 AND h.isDeleted = false")
+    List<Homestay> findAllPublicSimple();
 }

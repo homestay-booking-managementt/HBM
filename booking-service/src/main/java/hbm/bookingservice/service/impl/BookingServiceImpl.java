@@ -2,7 +2,6 @@ package hbm.bookingservice.service.impl;
 
 import hbm.bookingservice.constant.BookingStatus;
 import hbm.bookingservice.dto.booking.*;
-import hbm.bookingservice.dto.homestay.HomestayDTO;
 import hbm.bookingservice.dto.homestay.HomestayDetailDto;
 import hbm.bookingservice.dto.homestay.HomestayImageDto;
 import hbm.bookingservice.dto.homestay.HomestaySummaryDto;
@@ -12,7 +11,6 @@ import hbm.bookingservice.entity.Homestay;
 import hbm.bookingservice.entity.User;
 import hbm.bookingservice.exception.AccessForbiddenException;
 import hbm.bookingservice.mapper.BookingMapper;
-import hbm.bookingservice.mapper.HomestayMapper;
 import hbm.bookingservice.repository.BookingRepository;
 import hbm.bookingservice.repository.HomestayRepository;
 import hbm.bookingservice.repository.UserRepository;
@@ -28,7 +26,6 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -68,7 +65,8 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public BookingDetailDto createBooking(BookingCreationRequestDto requestDto) {
-        if (requestDto.getCheckIn().isAfter(requestDto.getCheckOut()) || requestDto.getCheckIn().isEqual(requestDto.getCheckOut())) {
+        if (requestDto.getCheckIn().isAfter(requestDto.getCheckOut())
+                || requestDto.getCheckIn().isEqual(requestDto.getCheckOut())) {
             throw new IllegalArgumentException("Check-out date must be after check-in date.");
         }
 
@@ -112,7 +110,8 @@ public class BookingServiceImpl implements BookingService {
 
         Booking savedBooking = bookingRepository.save(newBooking);
 
-        // 6. Ánh xạ sang BookingDetailDto đầy đủ (Booking, Homestay Entity, User Entity)
+        // 6. Ánh xạ sang BookingDetailDto đầy đủ (Booking, Homestay Entity, User
+        // Entity)
         return bookingMapper.toDetailDto(savedBooking, homestay, customer);
     }
 
@@ -162,8 +161,9 @@ public class BookingServiceImpl implements BookingService {
         // 4. Cập nhật và lưu
         booking.setStatus(newStatus.name().toLowerCase());
         // Ghi lại lý do nếu có
-        // if (newStatus == BookingStatus.REJECTED || newStatus == BookingStatus.CANCELLED) {
-        //     booking.setHostReason(reason);
+        // if (newStatus == BookingStatus.REJECTED || newStatus ==
+        // BookingStatus.CANCELLED) {
+        // booking.setHostReason(reason);
         // }
 
         Booking updatedBooking = bookingRepository.save(booking);
@@ -192,7 +192,8 @@ public class BookingServiceImpl implements BookingService {
             throw new IllegalArgumentException("Cannot cancel booking with current status: " + currentStatus);
         }
 
-        // 3. Kiểm tra Chính sách Hủy (Ví dụ: Không được hủy trong vòng 2 ngày trước Check-in)
+        // 3. Kiểm tra Chính sách Hủy (Ví dụ: Không được hủy trong vòng 2 ngày trước
+        // Check-in)
         long daysUntilCheckIn = ChronoUnit.DAYS.between(LocalDate.now(), booking.getCheckIn());
 
         if (daysUntilCheckIn < 2 && currentStatus == BookingStatus.CONFIRMED) {
@@ -226,7 +227,8 @@ public class BookingServiceImpl implements BookingService {
         User user = userRepository.findById(updatedBooking.getUserId())
                 .orElseThrow(() -> new RuntimeException("User (Customer) not found for mapping."));
 
-        // 5c. Gọi Mapper với 3 Entity (Sửa lỗi cú pháp book.toDto -> bookingMapper.toDetailDto)
+        // 5c. Gọi Mapper với 3 Entity (Sửa lỗi cú pháp book.toDto ->
+        // bookingMapper.toDetailDto)
         return bookingMapper.toDetailDto(updatedBooking, homestay, user);
 
     }
@@ -241,87 +243,10 @@ public class BookingServiceImpl implements BookingService {
         System.out.println("------------------");
     }
 
-    private BookingDetailDto mapBookingAndHomestayToDetailDto(Booking booking, HomestayDTO homestay) {
-
-        // --- 1. Lấy thông tin User ---
-        // Giả sử userId đã được xác thực
-        UserDetailSummaryDto userDto =new UserDetailSummaryDto(booking.getUserId(), "null", "null", "0214213231");
-
-        // --- 2. Ánh xạ Homestay Detail DTO ---
-        HomestayDetailDto homestayDetailDto = mapHomestayDtoToDetailDto(homestay);
-
-        // --- 3. Ánh xạ Booking Detail DTO ---
-        BookingDetailDto detailDto = new BookingDetailDto();
-        detailDto.setBookingId(booking.getId());
-        detailDto.setCheckIn(booking.getCheckIn());
-        detailDto.setCheckOut(booking.getCheckOut());
-
-        // Tính nights (Nếu không được Entity Booking tự tính)
-        long nights = java.time.temporal.ChronoUnit.DAYS.between(booking.getCheckIn(), booking.getCheckOut());
-        detailDto.setNights((int) nights);
-
-        detailDto.setTotalPrice(booking.getTotalPrice());
-        detailDto.setStatus(booking.getStatus());
-        detailDto.setCreatedAt(booking.getCreatedAt());
-
-        // Gán các DTO lồng nhau
-        detailDto.setUser(userDto);
-        detailDto.setHomestay(homestayDetailDto);
-
-        return detailDto;
-    }
-
-    private HomestayDetailDto mapHomestayDtoToDetailDto(HomestayDTO homestay) {
-        HomestayDetailDto dto = new HomestayDetailDto();
-        dto.setId(homestay.getId());
-        dto.setName(homestay.getName());
-        dto.setDescription(homestay.getDescription());
-        dto.setAddress(homestay.getAddress());
-        dto.setCity(homestay.getCity());
-        dto.setLat(homestay.getLat());
-        dto.setLongVal(homestay.getLongitude()); // Mapping từ longitude sang longVal
-        dto.setCapacity(homestay.getCapacity() != null ? homestay.getCapacity().intValue() : null);
-        dto.setNumRooms(homestay.getNumRooms() != null ? homestay.getNumRooms().intValue() : null);
-        dto.setBathroomCount(homestay.getBathroomCount() != null ? homestay.getBathroomCount().intValue() : null);
-        dto.setBasePrice(homestay.getBasePrice());
-
-        // Amenities: giữ nguyên JSON string nếu cần
-        dto.setAmenities(homestay.getAmenities());
-
-        // Hình ảnh (List<HomestayImageDto>):
-        // LƯU Ý QUAN TRỌNG: HomestayDTO lấy từ service khác chưa có List<HomestayImageDto>.
-        // Bạn cần gọi thêm API để lấy danh sách ảnh chi tiết HOẶC Homestay Service
-        // cần trả về List<HomestayImageDto> ngay trong HomestayDTO.
-        // Tạm thời để trống hoặc lấy ảnh chính nếu có.
-        dto.setImages(java.util.Collections.emptyList());
-
-        return dto;
-    }
-
-    private HomestayDTO mapToHomestayDTO(Map<String, Object> data) {
-        HomestayDTO dto = new HomestayDTO();
-        dto.setId(Long.valueOf(data.get("id").toString()));
-        dto.setUserId(Long.valueOf(data.get("userId").toString()));
-        dto.setName(data.get("name").toString());
-        dto.setDescription(data.get("description").toString());
-        dto.setAddress(data.get("address").toString());
-        dto.setCity(data.get("city").toString());
-        dto.setLat(Double.valueOf(data.get("lat").toString()));
-        dto.setLongitude(Double.valueOf(data.get("longitude").toString()));
-        dto.setCapacity(Short.valueOf(data.get("capacity").toString()));
-        dto.setNumRooms(Short.valueOf(data.get("numRooms").toString()));
-        dto.setBathroomCount(Short.valueOf(data.get("bathroomCount").toString()));
-        dto.setStatus(Byte.valueOf(data.get("status").toString()));
-        dto.setAmenities(data.get("amenities").toString());
-        dto.setCreatedAt(LocalDateTime.parse(data.get("createdAt").toString()));
-        dto.setUpdatedAt(LocalDateTime.parse(data.get("updatedAt").toString()));
-        dto.setBasePrice(new BigDecimal(data.get("basePrice").toString()));
-
-        return dto;
-    }
-
     /**
-     * Phương thức ánh xạ và nhóm (grouping) từ List<BookingDetailProjection> sang BookingDetailDto
+     * Phương thức ánh xạ và nhóm (grouping) từ List<BookingDetailProjection> sang
+     * BookingDetailDto
+     * 
      * @param projections danh sách kết quả phẳng từ DB
      * @return BookingDetailDto đã được ánh xạ
      */

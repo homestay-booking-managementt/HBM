@@ -2,11 +2,14 @@ package hbm.homestayservice.service;
 
 import hbm.homestayservice.dto.CreateHomestayRequest;
 import hbm.homestayservice.dto.HomestayDTO;
+import hbm.homestayservice.dto.HomestayImageDTO;
 import hbm.homestayservice.dto.HomestayPendingDTO;
 import hbm.homestayservice.dto.UpdateHomestayRequest;
 import hbm.homestayservice.dto.UpdateHomestayStatusRequest;
 import hbm.homestayservice.entity.Homestay;
+import hbm.homestayservice.entity.HomestayImage;
 import hbm.homestayservice.entity.HomestayPending;
+import hbm.homestayservice.repository.HomestayImageRepository;
 import hbm.homestayservice.repository.HomestayPendingRepository;
 import hbm.homestayservice.repository.HomestayRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -30,16 +33,29 @@ public class HomestayService {
     private HomestayPendingRepository homestayPendingRepository;
     
     @Autowired
+    private HomestayImageRepository homestayImageRepository;
+    
+    @Autowired
     private ObjectMapper objectMapper;
     
     /**
      * Lấy danh sách homestay công khai với các bộ lọc
      */
     public List<HomestayDTO> getPublicHomestays(String city, Short capacity, LocalDate checkIn, LocalDate checkOut) {
-        List<Homestay> homestays = homestayRepository.findPublicHomestaysWithFilters(city, capacity, checkIn, checkOut);
-        return homestays.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+        try {
+            List<Homestay> homestays = homestayRepository.findPublicHomestaysWithFilters(city, capacity, checkIn, checkOut);
+            return homestays.stream()
+                    .map(this::convertToDTO)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            // Fallback to simple query if complex query fails
+            System.err.println("Complex query failed, using fallback: " + e.getMessage());
+            e.printStackTrace();
+            List<Homestay> homestays = homestayRepository.findAllPublicSimple();
+            return homestays.stream()
+                    .map(this::convertToDTO)
+                    .collect(Collectors.toList());
+        }
     }
     
     /**
@@ -82,6 +98,18 @@ public class HomestayService {
         
         // Lưu vào database
         Homestay savedHomestay = homestayRepository.save(homestay);
+        
+        // Lưu ảnh nếu có
+        if (request.getImages() != null && !request.getImages().isEmpty()) {
+            for (CreateHomestayRequest.ImageRequest imageReq : request.getImages()) {
+                HomestayImage image = new HomestayImage();
+                image.setHomestayId(savedHomestay.getId());
+                image.setUrl(imageReq.getUrl());
+                image.setAlt(imageReq.getAlt());
+                image.setIsPrimary(imageReq.getIsPrimary() != null ? imageReq.getIsPrimary() : false);
+                homestayImageRepository.save(image);
+            }
+        }
         
         return convertToDTO(savedHomestay);
     }
@@ -133,8 +161,8 @@ public class HomestayService {
             throw new IllegalArgumentException("Bạn không có quyền chỉnh sửa homestay này");
         }
         
-        // Kiểm tra homestay đã bị xóa chưa
-        if (homestay.getIsDeleted()) {
+        // Kiểm tra homestay đã bị xóa chưa (null-safe check)
+        if (Boolean.TRUE.equals(homestay.getIsDeleted())) {
             throw new IllegalArgumentException("Homestay đã bị xóa");
         }
         
@@ -168,6 +196,27 @@ public class HomestayService {
         dto.setStatus(homestay.getStatus());
         dto.setCreatedAt(homestay.getCreatedAt());
         dto.setUpdatedAt(homestay.getUpdatedAt());
+        
+        // Lấy danh sách ảnh
+        List<HomestayImage> images = homestayImageRepository.findByHomestayIdOrderByIsPrimaryDesc(homestay.getId());
+        List<HomestayImageDTO> imageDTOs = images.stream()
+                .map(this::convertImageToDTO)
+                .collect(Collectors.toList());
+        dto.setImages(imageDTOs);
+        
+        return dto;
+    }
+    
+    /**
+     * Chuyển đổi HomestayImage entity sang DTO
+     */
+    private HomestayImageDTO convertImageToDTO(HomestayImage image) {
+        HomestayImageDTO dto = new HomestayImageDTO();
+        dto.setId(image.getId());
+        dto.setUrl(image.getUrl());
+        dto.setAlt(image.getAlt());
+        dto.setIsPrimary(image.getIsPrimary());
+        dto.setCreatedAt(image.getCreatedAt());
         return dto;
     }
     

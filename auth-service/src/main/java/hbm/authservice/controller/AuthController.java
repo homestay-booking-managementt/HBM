@@ -4,9 +4,7 @@ import hbm.authservice.dto.*;
 import hbm.authservice.entity.User;
 import hbm.authservice.service.AuthService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/auth")
@@ -37,6 +35,6 @@ public class AuthController {
 
     @PostMapping("/v1/validate")
     public TokenResponse validateToken(@RequestBody TokenValidateRequest request) {
-            return authService.validateToken(request);
+        return authService.validateToken(request);
     }
 }

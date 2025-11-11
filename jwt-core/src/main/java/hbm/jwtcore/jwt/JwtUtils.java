@@ -2,7 +2,6 @@ package hbm.jwtcore.jwt;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.lang.Collections;
 import io.jsonwebtoken.security.Keys;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +28,6 @@ public class JwtUtils implements JwtService {
     @Value("${jwt.refreshTokenExpiration}")
     private int refreshTokenExpiration;
 
-
     private Key getSigningKey() {
         log.info("Secret key: {}", secretKey);
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
@@ -46,7 +44,6 @@ public class JwtUtils implements JwtService {
         return extractClaim(token, Claims::getExpiration);
     }
 
-
     @Override
     public List<String> extractRoles(String token) {
         List<?> rawList = extractAllClaims(token).get("roles", List.class);
@@ -54,7 +51,6 @@ public class JwtUtils implements JwtService {
                 .map(Object::toString)
                 .toList();
     }
-
 
     @Override
     public Long extractUserId(String token) {
@@ -71,10 +67,6 @@ public class JwtUtils implements JwtService {
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
-    }
-
-    private boolean isTokenExpired(String token) {
-        return extractClaim(token, Claims::getExpiration).before(new Date());
     }
 
     @Override
@@ -116,4 +108,3 @@ public class JwtUtils implements JwtService {
                 .compact();
     }
 }
-
