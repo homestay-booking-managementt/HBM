@@ -9,4 +9,5 @@ public interface AuthService {
     AuthResponse refreshToken(String refreshToken);
     void logout(String refreshToken);
     TokenResponse validateToken(TokenValidateRequest request);
+    AuthResponse.UserInfo getCurrentUser(String authorization);
 }
