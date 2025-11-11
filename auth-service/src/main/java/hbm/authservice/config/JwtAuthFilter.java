@@ -1,103 +1,86 @@
-//package hbm.authservice.config;
-//
-//import hbm.authservice.service.impl.CustomUserDetailsService;
-//import hbm.jwtcore.jwt.JwtService;
-//import io.jsonwebtoken.ExpiredJwtException;
-//import jakarta.servlet.FilterChain;
-//import jakarta.servlet.ServletException;
-//import jakarta.servlet.http.HttpServletRequest;
-//import jakarta.servlet.http.HttpServletResponse;
-//import lombok.RequiredArgsConstructor;
-//import lombok.extern.slf4j.Slf4j;
-//import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-//import org.springframework.security.core.GrantedAuthority;
-//import org.springframework.security.core.authority.SimpleGrantedAuthority;
-//import org.springframework.security.core.context.SecurityContextHolder;
-//import org.springframework.security.core.userdetails.UserDetails;
-//import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-//import org.springframework.stereotype.Component;
-//import org.springframework.web.filter.OncePerRequestFilter;
-//
-//import java.io.IOException;
-//import java.util.List;
-//
-//@Component
-//@RequiredArgsConstructor
-//@Slf4j
-//public class JwtAuthFilter extends OncePerRequestFilter {
-//
-//    private final JwtService jwtService;
-//    private final CustomUserDetailsService userDetailsService;
-//
-//    @Override
-//    protected void doFilterInternal(HttpServletRequest request,
-//                                    HttpServletResponse response,
-//                                    FilterChain filterChain)
-//            throws ServletException, IOException {
-//
-//        log.info("JwtAuthFilter: {}", request.getRequestURI());
-//
-//        final String authHeader = request.getHeader("Authorization");
-//        final String jwt;
-//        final String username;
-//        List<String> roles;
-//
-//        // 1️⃣ Bỏ qua nếu không có header Authorization
-//        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-//            log.info("No JWT, skipping filter for {}", request.getRequestURI());
-//            filterChain.doFilter(request, response);
-//            return;
-//        }
-//
-//        jwt = authHeader.substring(7); // bỏ "Bearer "
-//        try {
-//            username = jwtService.extractUsername(jwt);
-//            roles = jwtService.extractRoles(jwt);
-//            roles.forEach(role -> log.info("Role: {}", role));
-//        } catch (ExpiredJwtException e) {
-//            log.warn("JWT expired");
-//            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-//            response.getWriter().write("{\"error\":\"Token expired\"}");
-//            response.setContentType("application/json");
-//            return;
-//        } catch (Exception e) {
-//            log.error("Invalid JWT");
-//            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-//            response.getWriter().write("{\"error\":\"Invalid token\"}");
-//            response.setContentType("application/json");
-//            return;
-//        }
-//
-//        // 2️⃣ Nếu đã có authentication thì bỏ qua
-//        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-//            UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
-//            List<SimpleGrantedAuthority> authorities = roles.stream()
-//                    .map(SimpleGrantedAuthority::new)
-//                    .toList();
-//
-//            if (jwtService.validateToken(jwt)) {
-//                UsernamePasswordAuthenticationToken authToken =
-//                        new UsernamePasswordAuthenticationToken(
-//                                userDetails,
-//                                null,
-//                                authorities
-//                        );
-//                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-//
-//                // ✅ Gắn vào context để @PreAuthorize hoạt động
-//                SecurityContextHolder.getContext().setAuthentication(authToken);
-//            }
-//        }
-//
-//        filterChain.doFilter(request, response);
-//    }
-//
-//    @Override
-//    protected boolean shouldNotFilter(HttpServletRequest request) {
-//        String path = request.getRequestURI();
-//        return path.startsWith("/auth/v1/login")
-//                || path.startsWith("/auth/v1/register")
-//                || path.startsWith("/auth/v1/refresh-token")
-//                || path.startsWith("/auth/v1/validate"); // ✅ Validate token API phải bypass filter
-//    }
-//}
+package hbm.authservice.config;
+
+import hbm.authservice.service.impl.CustomUserDetails;
+import hbm.authservice.service.impl.CustomUserDetailsService;
+import hbm.jwtcore.jwt.JwtService;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
+import java.util.List;
+
+// Giả định bạn có một JwtService để xử lý token (validate, parse claims)
+
+@Component
+@RequiredArgsConstructor
+@Slf4j
+public class JwtAuthFilter extends OncePerRequestFilter {
+
+    private final JwtService jwtService; // Service bạn dùng để validate và parse JWT
+    private final CustomUserDetailsService userDetailsService; // Service để tải UserDetails nếu cần
+
+    @Override
+    protected void doFilterInternal(
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain
+    ) throws ServletException, IOException {
+
+        // 1. Lấy Authorization Header
+        final String authHeader = request.getHeader("Authorization");
+        final String jwt;
+        final String userEmail;
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // 2. Trích xuất JWT
+        jwt = authHeader.substring(7);
+
+        // 3. Trích xuất email (hoặc user ID) từ JWT (Không cần gọi DB tại đây)
+        userEmail = jwtService.extractUsername(jwt);
+
+        if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+
+            // 4. Validate Token
+            if (jwtService.validateToken(jwt)) {
+
+                // 5. Trích xuất Claims (ID, Roles) từ JWT
+                // Nếu bạn lưu userId và roles trong JWT, bạn có thể tạo CustomUserDetails trực tiếp.
+
+                Long userId = jwtService.extractUserId(jwt);
+                List<String> rolesList = jwtService.extractRoles(jwt); // Giả định hàm này parse Role claims
+
+                List<SimpleGrantedAuthority> authorities = rolesList.stream()
+                        .map(role -> new SimpleGrantedAuthority("ROLE_" + role.trim().toUpperCase()))
+                        .toList();
+
+                // Tạo CustomUserDetails (Giống như logic trong Gateway filter cũ)
+                CustomUserDetails userDetails = new CustomUserDetails(userEmail, userId, rolesList);
+
+                UsernamePasswordAuthenticationToken authToken =
+                        new UsernamePasswordAuthenticationToken(
+                                userDetails,
+                                null,
+                                authorities
+                        );
+
+                // 6. Thiết lập Authentication
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+            }
+        }
+        filterChain.doFilter(request, response);
+    }
+}

@@ -17,7 +17,6 @@ public class UserServiceImpl implements IUserService {
     private final UserRepository userRepository;
 
     @Override
-    @PreAuthorize("hasRole('USER')")
     public User myProfile() {
         CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext()
                 .getAuthentication().getPrincipal();

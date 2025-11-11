@@ -12,6 +12,6 @@ server:
 
 jwt:
   secretKey: QWERTYUIOPasdfghJKLzxcvbnm1234567890QWERTYUIOPasdfgh
-  accessTokenExpiration: 15
+  accessTokenExpiration: 1500000
   refreshTokenExpiration: 7
 
