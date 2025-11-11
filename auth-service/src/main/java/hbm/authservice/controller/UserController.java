@@ -16,7 +16,7 @@ public class UserController {
     private final IUserService userService;
 
     @GetMapping("/my-profile")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public User myProfile() {
         return userService.myProfile();
     }
