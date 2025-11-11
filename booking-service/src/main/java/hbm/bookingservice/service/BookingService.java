@@ -12,4 +12,8 @@ public interface BookingService {
     BookingDetailDto getBookingDetails(Long bookingId, Long userId);
 
     BookingDetailDto createBooking(BookingCreationRequestDto bookingDto);
+
+    BookingDetailDto updateBookingStatusByHost(Long bookingId, Long hostId, String newStatus);
+
+    BookingDetailDto cancelBookingByCustomer(Long bookingId, Long customerId, String reason);
 }

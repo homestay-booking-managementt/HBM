@@ -3,6 +3,8 @@ package hbm.bookingservice.controller;
 import hbm.bookingservice.dto.booking.BookingCreationRequestDto;
 import hbm.bookingservice.dto.booking.BookingDetailDto;
 import hbm.bookingservice.dto.booking.BookingDto;
+import hbm.bookingservice.dto.booking.BookingStatusUpdateDto;
+import hbm.bookingservice.dto.user.CustomerBookingCancelDto;
 import hbm.bookingservice.service.BookingService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -65,5 +67,32 @@ public class BookingController {
             // Xử lý lỗi server (lỗi kết nối, homestay không khả dụng)
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(); // 500 INTERNAL SERVER ERROR
         }
+    }
+
+    @PutMapping("/{bookingId}/status")
+    public ResponseEntity<BookingDetailDto> updateBookingStatus(
+            // Lấy ID Host từ Security Context (Giả định đã có Filter/Interceptor)
+            @RequestParam("hostId") Long hostId,
+            @PathVariable Long bookingId,
+            @Valid @RequestBody BookingStatusUpdateDto updateDto) {
+
+            BookingDetailDto updatedBooking = bookingService.updateBookingStatusByHost(
+                    bookingId, hostId, updateDto.getNewStatus());
+
+            return ResponseEntity.ok(updatedBooking);
+    }
+
+    @PatchMapping("/{bookingId}/cancel")
+    public ResponseEntity<BookingDetailDto> cancelBooking(
+            @RequestParam("userId") Long customerId, // Lấy ID Customer từ Security Context
+            @PathVariable Long bookingId,
+            @Valid @RequestBody CustomerBookingCancelDto cancelDto) {
+
+            BookingDetailDto updatedBooking = bookingService.cancelBookingByCustomer(
+                    bookingId,
+                    customerId,
+                    cancelDto.getCancellationReason());
+
+            return ResponseEntity.ok(updatedBooking);
     }
 }
