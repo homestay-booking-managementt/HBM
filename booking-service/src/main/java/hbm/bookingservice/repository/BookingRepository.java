@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Repository
@@ -51,4 +52,21 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     WHERE b.id = :bookingId AND b.user_id = :userId
     """, nativeQuery = true)
     List<BookingDetailProjection> findBookingDetails(@Param("bookingId") Long bookingId, @Param("userId") Long userId);
+
+    @Query(value = """
+    SELECT COUNT(b.id)
+    FROM Booking b
+    WHERE b.homestayId = :homestayId
+      AND b.status IN ('CONFIRMED', 'COMPLETED')
+      AND b.id != :currentBookingId
+      AND (
+          (b.checkIn < :checkOut AND b.checkOut > :checkIn)
+      )
+    """)
+    Long countConflictingConfirmedBookings(
+            @Param("homestayId") Long homestayId,
+            @Param("checkIn") LocalDate checkIn,
+            @Param("checkOut") LocalDate checkOut,
+            @Param("currentBookingId") Long currentBookingId
+    );
 }
