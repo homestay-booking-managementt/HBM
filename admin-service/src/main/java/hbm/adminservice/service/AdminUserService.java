@@ -6,8 +6,11 @@ import hbm.adminservice.entity.User;
 import hbm.adminservice.repository.UserRepository;
 import hbm.adminservice.repository.UserRoleRepository;
 import hbm.adminservice.repository.UserStatusHistoryRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -26,6 +29,9 @@ public class AdminUserService {
     
     @Autowired
     private UserStatusHistoryRepository userStatusHistoryRepository;
+    
+    @PersistenceContext
+    private EntityManager entityManager;
     
     /**
      * Lấy danh sách người dùng theo role
@@ -57,6 +63,7 @@ public class AdminUserService {
      * @param adminId ID của admin thực hiện thay đổi
      * @return UserDTO đã được cập nhật
      */
+    @Transactional
     public UserDTO updateUserStatus(Long userId, Integer newStatus, String reason, Long adminId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy user với ID: " + userId));
@@ -66,13 +73,25 @@ public class AdminUserService {
             throw new IllegalArgumentException("Trạng thái không hợp lệ. Phải từ 0-3");
         }
         
-        user.setStatus(newStatus);
-        user.setUpdatedAt(java.time.LocalDateTime.now());
+        // Set session variables cho trigger MySQL biết ai đang thao tác và lý do
+        entityManager.createNativeQuery("SET @actor_id = :actorId")
+                .setParameter("actorId", adminId)
+                .executeUpdate();
         
-        // Lưu user
+        String changeReason = reason != null && !reason.trim().isEmpty() ? reason : "Không có lý do";
+        entityManager.createNativeQuery("SET @change_reason = :reason")
+                .setParameter("reason", changeReason)
+                .executeUpdate();
+        
+        // Cập nhật trạng thái
+        user.setStatus(newStatus);
+        user.setUpdatedAt(LocalDateTime.now());
+        
+        // Lưu user - trigger sẽ tự động lưu vào user_status_history
         User updatedUser = userRepository.save(user);
         
-        // Note: user_status_history sẽ được tự động lưu bởi trigger MySQL
+        // Flush để đảm bảo trigger chạy
+        entityManager.flush();
         
         return convertToDTO(updatedUser);
     }

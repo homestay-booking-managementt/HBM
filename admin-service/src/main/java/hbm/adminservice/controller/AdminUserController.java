@@ -126,7 +126,7 @@ public class AdminUserController {
      * Lấy lịch sử thay đổi trạng thái của user
      * GET /api/admin/users/{userId}/status-history
      */
-    @GetMapping("/{userId}/status-history")
+    @GetMapping("/users/{userId}/status-history")
     public ResponseEntity<Map<String, Object>> getUserStatusHistory(@PathVariable Long userId) {
         try {
             List<hbm.adminservice.dto.UserStatusHistoryDTO> history = adminUserService.getUserStatusHistory(userId);
