@@ -52,6 +52,45 @@ public class AdminHomestayController {
     }
     
     /**
+     * API lấy danh sách homestay có yêu cầu cập nhật đang chờ duyệt
+     * GET http://localhost:8083/api/admin/homestays-pending-update
+     * 
+     * Response:
+     * {
+     *   "success": true,
+     *   "message": "Lấy danh sách homestay có yêu cầu cập nhật thành công",
+     *   "data": [{
+     *     "homestay": {...},
+     *     "pendingId": 1,
+     *     "pendingData": "{...}",
+     *     "submittedAt": "2025-11-11T10:00:00",
+     *     "status": "waiting"
+     *   }]
+     * }
+     */
+    @GetMapping("/homestays-pending-update")
+    public ResponseEntity<Map<String, Object>> getHomestaysPendingUpdate() {
+        try {
+            java.util.List<Map<String, Object>> pendingRequests = adminHomestayService.getHomestaysPendingUpdate();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Lấy danh sách homestay có yêu cầu cập nhật thành công");
+            response.put("data", pendingRequests);
+            response.put("total", pendingRequests.size());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Lỗi khi lấy danh sách homestay: " + e.getMessage());
+            errorResponse.put("data", null);
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+    
+    /**
      * API cho Admin duyệt/khóa homestay
      * PATCH http://localhost:8083/api/admin/homestays/{id}/status
      * 
@@ -217,6 +256,85 @@ public class AdminHomestayController {
             errorResponse.put("success", false);
             errorResponse.put("message", "Lỗi khi lấy lịch sử trạng thái: " + e.getMessage());
             errorResponse.put("data", null);
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+    
+    /**
+     * API duyệt yêu cầu cập nhật homestay
+     * POST http://localhost:8083/api/admin/homestay-pending/{id}/approve
+     * 
+     * Request Body:
+     * {
+     *   "adminId": 1
+     * }
+     */
+    @PostMapping("/homestay-pending/{id}/approve")
+    public ResponseEntity<Map<String, Object>> approvePendingUpdate(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> request
+    ) {
+        try {
+            Long adminId = Long.valueOf(request.get("adminId").toString());
+            adminHomestayService.approvePendingUpdate(id, adminId);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Đã duyệt yêu cầu cập nhật homestay thành công");
+            
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", e.getMessage());
+            
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Lỗi khi duyệt yêu cầu: " + e.getMessage());
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+    
+    /**
+     * API từ chối yêu cầu cập nhật homestay
+     * POST http://localhost:8083/api/admin/homestay-pending/{id}/reject
+     * 
+     * Request Body:
+     * {
+     *   "adminId": 1,
+     *   "reason": "Thông tin không đầy đủ"
+     * }
+     */
+    @PostMapping("/homestay-pending/{id}/reject")
+    public ResponseEntity<Map<String, Object>> rejectPendingUpdate(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> request
+    ) {
+        try {
+            Long adminId = Long.valueOf(request.get("adminId").toString());
+            String reason = request.get("reason") != null ? request.get("reason").toString() : null;
+            
+            adminHomestayService.rejectPendingUpdate(id, adminId, reason);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Đã từ chối yêu cầu cập nhật homestay");
+            
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", e.getMessage());
+            
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Lỗi khi từ chối yêu cầu: " + e.getMessage());
             
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }

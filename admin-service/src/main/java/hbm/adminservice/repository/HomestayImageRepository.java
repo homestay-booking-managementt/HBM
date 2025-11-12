@@ -10,7 +10,7 @@ import java.util.List;
 public interface HomestayImageRepository extends JpaRepository<HomestayImage, Long> {
     
     /**
-     * Lấy tất cả ảnh của một homestay (sắp xếp ảnh primary lên đầu)
+     * Lấy danh sách ảnh của homestay, sắp xếp ảnh chính lên đầu
      */
     List<HomestayImage> findByHomestayIdOrderByIsPrimaryDesc(Long homestayId);
 }

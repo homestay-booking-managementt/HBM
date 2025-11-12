@@ -21,9 +21,10 @@ public interface HomestayStatusHistoryRepository extends JpaRepository<HomestayS
     /**
      * Lấy lịch sử thay đổi trạng thái với thông tin người thay đổi
      */
-    @Query(value = "SELECT hsh.*, u.name as changed_by_name, u.email as changed_by_email " +
+    @Query(value = "SELECT hsh.id, hsh.homestay_id, hsh.old_status, hsh.new_status, " +
+            "hsh.reason, hsh.changed_by, hsh.changed_at, u.name as changed_by_name, u.email as changed_by_email " +
             "FROM homestay_status_history hsh " +
-            "LEFT JOIN users u ON hsh.changed_by = u.id " +
+            "LEFT JOIN user u ON hsh.changed_by = u.id " +
             "WHERE hsh.homestay_id = :homestayId " +
             "ORDER BY hsh.changed_at DESC",
             nativeQuery = true)
