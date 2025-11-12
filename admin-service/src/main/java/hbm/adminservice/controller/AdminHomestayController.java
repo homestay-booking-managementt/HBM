@@ -112,4 +112,113 @@ public class AdminHomestayController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
+    
+    /**
+     * API cập nhật trạng thái homestay (đơn giản hóa)
+     * PUT http://localhost:8083/api/admin/homestays/{id}/status
+     * 
+     * Request Body:
+     * {
+     *   "status": 1  // 0: Inactive, 1: Active, 2: Pending, 3: Banned
+     * }
+     */
+    @PutMapping("/homestays/{id}/status")
+    public ResponseEntity<Map<String, Object>> updateHomestayStatus(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> request
+    ) {
+        try {
+            Object statusObj = request.get("status");
+            if (statusObj == null) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("success", false);
+                errorResponse.put("message", "Trạng thái không được để trống");
+                errorResponse.put("data", null);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+            }
+            
+            Integer status = Integer.valueOf(statusObj.toString());
+            String reason = request.get("reason") != null ? request.get("reason").toString() : null;
+            
+            HomestayDTO updatedHomestay = adminHomestayService.updateHomestayStatus(id, status, reason);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Cập nhật trạng thái homestay thành công");
+            response.put("data", updatedHomestay);
+            
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", e.getMessage());
+            errorResponse.put("data", null);
+            
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Lỗi khi cập nhật trạng thái homestay: " + e.getMessage());
+            errorResponse.put("data", null);
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+    
+    /**
+     * API lấy chi tiết homestay
+     * GET http://localhost:8083/api/admin/homestays/{id}
+     */
+    @GetMapping("/homestays/{id}")
+    public ResponseEntity<Map<String, Object>> getHomestayDetail(@PathVariable Long id) {
+        try {
+            HomestayDTO homestay = adminHomestayService.getHomestayDetail(id);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Lấy thông tin homestay thành công");
+            response.put("data", homestay);
+            
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", e.getMessage());
+            errorResponse.put("data", null);
+            
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Lỗi khi lấy thông tin homestay: " + e.getMessage());
+            errorResponse.put("data", null);
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+    
+    /**
+     * API lấy lịch sử thay đổi trạng thái của homestay
+     * GET http://localhost:8083/api/admin/homestays/{id}/status-history
+     */
+    @GetMapping("/homestays/{id}/status-history")
+    public ResponseEntity<Map<String, Object>> getHomestayStatusHistory(@PathVariable Long id) {
+        try {
+            java.util.List<Map<String, Object>> history = adminHomestayService.getHomestayStatusHistory(id);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Lấy lịch sử trạng thái homestay thành công");
+            response.put("data", history);
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Lỗi khi lấy lịch sử trạng thái: " + e.getMessage());
+            errorResponse.put("data", null);
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
 }
