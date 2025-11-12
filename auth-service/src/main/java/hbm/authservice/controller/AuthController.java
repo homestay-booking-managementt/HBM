@@ -37,4 +37,9 @@ public class AuthController {
     public TokenResponse validateToken(@RequestBody TokenValidateRequest request) {
         return authService.validateToken(request);
     }
+
+    @GetMapping("/v1/me")
+    public AuthResponse.UserInfo getCurrentUser(@RequestHeader("Authorization") String authorization) {
+        return authService.getCurrentUser(authorization);
+    }
 }

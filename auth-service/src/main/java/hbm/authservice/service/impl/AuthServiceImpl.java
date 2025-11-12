@@ -48,14 +48,25 @@ public class AuthServiceImpl implements AuthService {
         user.setEmail(request.getEmail());
         user.setPasswd(passwordEncoder.encode(request.getPassword()));
         user.setPhone(request.getPhone());
-        user.setStatus((byte) 1);
+        // Xác định role và status dựa trên roleType
+        final String roleType;
+        if (request.getRoleType() != null && "HOST".equalsIgnoreCase(request.getRoleType())) {
+            // Đăng ký HOST: status = 0 (chưa kích hoạt), chờ admin duyệt
+            user.setStatus((byte) 0);
+            roleType = "HOST";
+        } else {
+            // Đăng ký CUSTOMER: status = 1 (hoạt động), không cần duyệt
+            user.setStatus((byte) 1);
+            roleType = "CUSTOMER";
+        }
+        
         user.setIsDeleted(false);
         user.setCreatedAt(LocalDateTime.now());
         userRepository.save(user);
 
-        // assign default role (USER)
-        Role role = roleRepository.findByName("CUSTOMER")
-                .orElseThrow(() -> new RuntimeException("Default role not found"));
+        // Gán role
+        Role role = roleRepository.findByName(roleType)
+                .orElseThrow(() -> new RuntimeException("Role not found: " + roleType));
         UserRole ur = new UserRole(user.getId(), role.getId());
         userRoleRepository.save(ur);
 
@@ -69,6 +80,17 @@ public class AuthServiceImpl implements AuthService {
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswd())) {
             throw new BadCredentialsException("Invalid credentials");
+        }
+
+        // Kiểm tra trạng thái tài khoản
+        if (user.getStatus() == 0) {
+            throw new RuntimeException("Account is pending approval");
+        }
+        if (user.getStatus() == 2) {
+            throw new RuntimeException("Account is temporarily suspended");
+        }
+        if (user.getStatus() == 3) {
+            throw new RuntimeException("Account is blocked");
         }
 
         List<String> roles = roleRepository.findByUserId(user.getId());
@@ -87,6 +109,13 @@ public class AuthServiceImpl implements AuthService {
         return AuthResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
+                .user(AuthResponse.UserInfo.builder()
+                        .id(user.getId())
+                        .name(user.getName())
+                        .email(user.getEmail())
+                        .roles(roles)
+                        .status(user.getStatus())
+                        .build())
                 .build();
     }
 
@@ -99,7 +128,12 @@ public class AuthServiceImpl implements AuthService {
         UserSession session = userSessionRepository.findByRefreshToken((refreshToken))
                 .orElseThrow(() -> new RuntimeException("Refresh token not found"));
 
-        User user = userRepository.findById(session.getUserId())
+        Long userId = session.getUserId();
+        if (userId == null) {
+            throw new RuntimeException("Invalid session");
+        }
+
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         List<String> roles = roleRepository.findByUserId(user.getId());
@@ -125,17 +159,53 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public TokenResponse validateToken(TokenValidateRequest request) {
-        // Chỉ cần try-catch cho các loại lỗi cụ thể mà bạn muốn map thành 401
         try {
             Claims claims = jwtService.extractAllClaims(request.token());
 
             Long userId = claims.get("userId", Long.class);
             String email = claims.getSubject();
-            List<String> roles = claims.get("roles", List.class);
+            @SuppressWarnings("unchecked")
+            List<String> roles = (List<String>) claims.get("roles");
 
             return new TokenResponse(userId, email, roles);
         } catch (ExpiredJwtException e) {
             throw e;
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token", e);
+        }
+    }
+
+    @Override
+    public AuthResponse.UserInfo getCurrentUser(String authorization) {
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid authorization header");
+        }
+
+        String token = authorization.substring(7);
+        
+        try {
+            Claims claims = jwtService.extractAllClaims(token);
+
+            Long userId = claims.get("userId", Long.class);
+            if (userId == null) {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token: missing userId");
+            }
+
+            @SuppressWarnings("unchecked")
+            List<String> roles = (List<String>) claims.get("roles");
+
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            return AuthResponse.UserInfo.builder()
+                    .id(user.getId())
+                    .name(user.getName())
+                    .email(user.getEmail())
+                    .roles(roles)
+                    .status(user.getStatus())
+                    .build();
+        } catch (ExpiredJwtException e) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token expired", e);
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token", e);
         }
