@@ -1,12 +1,18 @@
 spring:
+  application:
+    name: auth-service
   datasource:
     url: jdbc:mysql://localhost:3306/HomestayBooking?createDatabaseIfNotExist=true
     username: root
-    password: root
+    password:
   jpa:
     show-sql: true
     hibernate:
-      ddl-auto: none
+      ddl-auto: update
+  # TẮT Flyway
+  flyway:
+    enabled: false
+
 server:
   port: 8081
 
@@ -15,3 +21,12 @@ jwt:
   accessTokenExpiration: 15
   refreshTokenExpiration: 7
 
+# Actuator endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
