@@ -96,6 +96,20 @@ public class AdminHomestayService {
     }
     
     /**
+     * Lấy danh sách homestay theo owner ID
+     */
+    public java.util.List<HomestayDTO> getHomestaysByOwnerId(Long ownerId) {
+        if (ownerId == null) {
+            throw new IllegalArgumentException("Owner ID không được để trống");
+        }
+        
+        java.util.List<Homestay> homestays = homestayRepository.findByOwnerId(ownerId);
+        return homestays.stream()
+                .map(this::convertToDTO)
+                .collect(java.util.stream.Collectors.toList());
+    }
+    
+    /**
      * Lấy danh sách homestay có yêu cầu cập nhật đang chờ duyệt
      * Lấy từ bảng homestay_pending với status='waiting'
      */

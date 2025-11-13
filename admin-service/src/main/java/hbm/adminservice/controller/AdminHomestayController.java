@@ -339,4 +339,60 @@ public class AdminHomestayController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
+    
+    /**
+     * API lấy danh sách homestay theo owner ID
+     * GET http://localhost:8083/api/admin/homestays/owner/{ownerId}
+     * 
+     * Response:
+     * {
+     *   "success": true,
+     *   "message": "Lấy danh sách homestay của chủ nhà thành công",
+     *   "data": [...],
+     *   "total": 5,
+     *   "ownerInfo": {
+     *     "id": 123,
+     *     "name": "Nguyễn Văn A",
+     *     "email": "owner@example.com"
+     *   }
+     * }
+     */
+    @GetMapping("/homestays/owner/{ownerId}")
+    public ResponseEntity<Map<String, Object>> getHomestaysByOwnerId(@PathVariable Long ownerId) {
+        try {
+            java.util.List<HomestayDTO> homestays = adminHomestayService.getHomestaysByOwnerId(ownerId);
+            
+            // Lấy thông tin chủ nhà từ homestay đầu tiên (nếu có)
+            Map<String, Object> ownerInfo = null;
+            if (!homestays.isEmpty() && homestays.get(0).getHost() != null) {
+                ownerInfo = new HashMap<>();
+                ownerInfo.put("id", homestays.get(0).getHost().getId());
+                ownerInfo.put("name", homestays.get(0).getHost().getName());
+                ownerInfo.put("email", homestays.get(0).getHost().getEmail());
+            }
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Lấy danh sách homestay của chủ nhà thành công");
+            response.put("data", homestays);
+            response.put("total", homestays.size());
+            response.put("ownerInfo", ownerInfo);
+            
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", e.getMessage());
+            errorResponse.put("data", null);
+            
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Lỗi khi lấy danh sách homestay: " + e.getMessage());
+            errorResponse.put("data", null);
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
 }
