@@ -42,4 +42,8 @@ public class Booking {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    private LocalDateTime cancelledAt;
+
+    private LocalDateTime paymentDeadline;
 }

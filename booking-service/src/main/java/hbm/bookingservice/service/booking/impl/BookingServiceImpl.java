@@ -112,6 +112,8 @@ public class BookingServiceImpl implements BookingService {
         newBooking.setTotalPrice(totalPrice);
         newBooking.setStatus(PENDING_PAYMENT.name().toLowerCase());
         newBooking.setCreatedAt(LocalDateTime.now());
+        newBooking.setPaymentDeadline(LocalDateTime.now().plusMinutes(95));
+
         // Payment deadline removed - not in DB schema
         Booking savedBooking = bookingRepository.save(newBooking);
 
@@ -243,9 +245,17 @@ public class BookingServiceImpl implements BookingService {
     @Transactional
     @Scheduled(fixedRate = 60000) // chạy mỗi 1 phút
     public String cancelUnpaidBooking() {
-        // Auto-cancel feature disabled - payment_deadline column not in DB schema
-        log.info("Auto-cancel unpaid bookings feature is disabled");
-        return "Auto-cancel feature disabled";
+        LocalDateTime now = LocalDateTime.now();
+        List<Booking> unpaidBookings = bookingRepository
+                .findAllByStatusAndPaymentDeadlineBefore(PENDING_PAYMENT.name().toLowerCase(), now);
+        for (Booking booking : unpaidBookings) {
+            booking.setStatus(CANCELLED.name().toLowerCase());
+            booking.setCancelledAt(now);
+            bookingRepository.save(booking);
+            log.info(" Auto-cancel booking {} due to timeout.", booking.getId());
+        }
+        return "Auto-cancelled " + unpaidBookings.size() + " unpaid bookings.";
+        
     }
 
     @Override
