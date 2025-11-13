@@ -115,4 +115,39 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("SELECT COUNT(DISTINCT b.userId) FROM Booking b WHERE b.userId IS NOT NULL AND b.createdAt BETWEEN :startDate AND :endDate")
     Long countDistinctUserIdByCreatedAtBetween(@Param("startDate") LocalDateTime startDate,
                                                 @Param("endDate") LocalDateTime endDate);
+    
+    // ========== Revenue Trends Queries ==========
+    
+    /**
+     * Lấy bookings trong khoảng thời gian để tính revenue trends
+     */
+    @Query("SELECT b FROM Booking b WHERE b.createdAt BETWEEN :startDate AND :endDate AND b.status != 'cancelled' ORDER BY b.createdAt ASC")
+    List<Booking> findBookingsForTrends(@Param("startDate") LocalDateTime startDate,
+                                        @Param("endDate") LocalDateTime endDate);
+    
+    // ========== Top Homestays Queries ==========
+    
+    /**
+     * Lấy top homestays theo doanh thu trong khoảng thời gian
+     * Returns: [homestayId, homestayName, bookingCount, totalRevenue]
+     */
+    @Query(value = "SELECT b.homestay_id as homestayId, h.name as homestayName, " +
+            "COUNT(b.id) as bookingCount, COALESCE(SUM(b.total_price), 0) as totalRevenue " +
+            "FROM booking b " +
+            "LEFT JOIN homestay h ON b.homestay_id = h.id " +
+            "WHERE b.created_at BETWEEN :startDate AND :endDate " +
+            "AND b.status != 'cancelled' " +
+            "GROUP BY b.homestay_id, h.name " +
+            "ORDER BY totalRevenue DESC " +
+            "LIMIT :limit", nativeQuery = true)
+    List<Object[]> findTopHomestaysByRevenue(@Param("startDate") LocalDateTime startDate,
+                                             @Param("endDate") LocalDateTime endDate,
+                                             @Param("limit") int limit);
+    
+    /**
+     * Lấy tất cả bookings trong khoảng thời gian để tính monthly revenue
+     */
+    @Query("SELECT b FROM Booking b WHERE b.createdAt BETWEEN :startDate AND :endDate AND b.status != 'cancelled' ORDER BY b.createdAt ASC")
+    List<Booking> findBookingsForMonthly(@Param("startDate") LocalDateTime startDate,
+                                         @Param("endDate") LocalDateTime endDate);
 }
