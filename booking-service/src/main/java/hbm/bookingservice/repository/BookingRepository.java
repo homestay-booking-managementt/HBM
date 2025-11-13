@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -76,7 +77,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("""
     SELECT b FROM Booking b
     WHERE b.homestayId = :homestayId
-      AND b.status IN ('pending_payment', 'confirmed', 'completed')
+      AND b.status IN ('pending_payment', 'confirmed', 'checked_in')
       AND (b.checkIn < :checkOut AND b.checkOut > :checkIn)
     """)
     List<Booking> findConflictingBookingsWithLock(
@@ -84,4 +85,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             @Param("checkIn") LocalDate checkIn,
             @Param("checkOut") LocalDate checkOut
     );
+
+    List<Booking> findAllByStatusAndPaymentDeadlineBefore(String status, LocalDateTime time);
+
 }

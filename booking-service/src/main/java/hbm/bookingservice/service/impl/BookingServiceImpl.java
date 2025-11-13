@@ -19,6 +19,7 @@ import hbm.bookingservice.service.BookingService;
 import hbm.bookingservice.service.MomoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +31,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static hbm.bookingservice.constants.BookingStatus.*;
 
 @Service
 @Slf4j
@@ -107,8 +110,9 @@ public class BookingServiceImpl implements BookingService {
         newBooking.setCheckIn(requestDto.getCheckIn());
         newBooking.setCheckOut(requestDto.getCheckOut());
         newBooking.setTotalPrice(totalPrice);
-        newBooking.setStatus("pending_payment");
+        newBooking.setStatus(PENDING_PAYMENT.name().toLowerCase());
         newBooking.setCreatedAt(LocalDateTime.now());
+        newBooking.setPaymentDeadline(LocalDateTime.now().plusMinutes(95));
         Booking savedBooking = bookingRepository.save(newBooking);
 
         CreateMomoResponse momoResponse = momoService.createPaymentUrl(savedBooking.getId());
@@ -233,6 +237,41 @@ public class BookingServiceImpl implements BookingService {
         // bookingMapper.toDetailDto)
         return bookingMapper.toDetailDto(updatedBooking, homestay, user);
 
+    }
+
+    @Override
+    @Transactional
+    @Scheduled(fixedRate = 60000) // chạy mỗi 1 phút
+    public String cancelUnpaidBooking() {
+        LocalDateTime now = LocalDateTime.now();
+        List<Booking> unpaidBookings = bookingRepository
+                .findAllByStatusAndPaymentDeadlineBefore(PENDING_PAYMENT.name().toLowerCase(), now);
+        for (Booking booking : unpaidBookings) {
+            booking.setStatus(CANCELLED.name().toLowerCase());
+            booking.setCancelledAt(now);
+            bookingRepository.save(booking);
+            log.info(" Auto-cancel booking {} due to timeout.", booking.getId());
+        }
+        return "Auto-cancelled " + unpaidBookings.size() + " unpaid bookings.";
+    }
+
+    @Override
+    @Transactional
+    public String checkIn(Long bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new IllegalArgumentException("Booking not found."));
+
+        if (!"confirmed".equals(booking.getStatus())) {
+            throw new IllegalStateException("Booking not eligible for check-in.");
+        }
+
+        if (booking.getCheckIn().isAfter(LocalDate.now())) {
+            throw new IllegalStateException("Cannot check in before the scheduled date.");
+        }
+
+        booking.setStatus(CHECK_IN.name().toLowerCase());
+        bookingRepository.save(booking);
+        return "Check-in successful.";
     }
 
     // Phương thức giả lập

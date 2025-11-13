@@ -52,19 +52,10 @@ public class BookingController {
     public ResponseEntity<BookingCreationResponse> createBooking(
             @Valid @RequestBody BookingCreationRequestDto requestDto) {
 
-        try {
             BookingCreationResponse newBooking = bookingService.createBooking(requestDto);
 
             // Trả về 201 Created
             return new ResponseEntity<>(newBooking, HttpStatus.CREATED);
-
-        } catch (IllegalArgumentException e) {
-            // Xử lý lỗi nghiệp vụ (ngày tháng không hợp lệ, vv)
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build(); // 400 BAD REQUEST
-        } catch (RuntimeException e) {
-            // Xử lý lỗi server (lỗi kết nối, homestay không khả dụng)
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(); // 500 INTERNAL SERVER ERROR
-        }
     }
 
     @PutMapping("/{bookingId}/status")
@@ -92,5 +83,15 @@ public class BookingController {
                     cancelDto.getCancellationReason());
 
             return ResponseEntity.ok(updatedBooking);
+    }
+
+    @PostMapping("/{bookingId}/checkin")
+    public ResponseEntity<String> checkIn(@PathVariable Long bookingId) {
+        return ResponseEntity.ok(bookingService.checkIn(bookingId));
+    }
+
+    @PostMapping("/cancel-unpaid")
+    public ResponseEntity<String> cancelUnpaidBookings() {
+        return ResponseEntity.ok(bookingService.cancelUnpaidBooking());
     }
 }
