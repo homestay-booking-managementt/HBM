@@ -1,4 +1,4 @@
-package hbm.bookingservice.service.impl;
+package hbm.bookingservice.service.review.impl;
 
 import hbm.bookingservice.dto.review.ReviewCreationRequestDto;
 import hbm.bookingservice.dto.review.ReviewDto;
@@ -12,7 +12,7 @@ import hbm.bookingservice.mapper.UserMapper;
 import hbm.bookingservice.repository.BookingRepository;
 import hbm.bookingservice.repository.ReviewRepository;
 import hbm.bookingservice.repository.UserRepository;
-import hbm.bookingservice.service.ReviewService;
+import hbm.bookingservice.service.review.ReviewService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

@@ -25,6 +25,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             b.nights AS nights,
             b.total_price AS totalPrice,
             b.status AS status,
+            p.status AS paymentStatus,
             b.created_at AS createdAt,
             h.id AS homestayId,
             h.name AS homestayName,
@@ -32,6 +33,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             hi.url AS primaryImageUrl
         FROM booking b
         JOIN homestay h ON b.homestay_id = h.id
+        JOIN payment p on b.id = p.booking_id
         LEFT JOIN homestay_image hi ON h.id = hi.homestay_id AND hi.is_primary = 1
         WHERE b.user_id = :userId
         ORDER BY b.user_id,b.created_at DESC
@@ -41,7 +43,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query(value = """
     SELECT
         b.id AS bookingId, b.check_in AS checkIn, b.check_out AS checkOut,
-        b.total_price AS totalPrice, b.status AS status, b.nights AS nights, b.created_at AS createdAt,
+        b.total_price AS totalPrice, b.status AS status, p.status AS paymentStatus, b.nights AS nights, b.created_at AS createdAt,
         h.id AS homestayId, h.name AS homestayName, h.description AS description,
         h.address AS address, h.city AS city, h.lat AS lat, h.long AS longVal,
         h.base_price AS basePrice, h.amenities AS amenities,
@@ -51,6 +53,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     FROM booking b
     JOIN homestay h ON b.homestay_id = h.id
     JOIN user u ON b.user_id = u.id
+    JOIN payment p on b.id = p.booking_id
     LEFT JOIN homestay_image hi ON h.id = hi.homestay_id
     WHERE b.id = :bookingId AND b.user_id = :userId
     """, nativeQuery = true)

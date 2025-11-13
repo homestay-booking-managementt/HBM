@@ -21,6 +21,7 @@ public class BookingDetailDto {
     private Integer nights;
     private BigDecimal totalPrice;
     private String status;
+    private String paymentStatus;
     private LocalDateTime createdAt;
     private HomestayDetailDto homestay;
     private UserDetailSummaryDto user;
