@@ -1,6 +1,7 @@
 package hbm.adminservice.service;
 
 import hbm.adminservice.dto.BookingDTO;
+import hbm.adminservice.dto.CustomerBookingsResponse;
 import hbm.adminservice.entity.Booking;
 import hbm.adminservice.entity.Homestay;
 import hbm.adminservice.entity.User;
@@ -62,6 +63,34 @@ public class AdminBookingService {
     }
     
     /**
+     * Lấy danh sách booking của một customer cụ thể kèm thông tin customer
+     */
+    public CustomerBookingsResponse getBookingsByCustomerId(Long customerId) {
+        // Lấy thông tin customer
+        User customer = userRepository.findById(customerId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy khách hàng với ID: " + customerId));
+        
+        // Lấy danh sách booking của customer
+        List<Booking> bookings = bookingRepository.findByUserIdOrderByCreatedAtDesc(customerId);
+        
+        // Convert sang DTO
+        List<BookingDTO> bookingDTOs = bookings.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+        
+        // Tạo CustomerInfo
+        CustomerBookingsResponse.CustomerInfo customerInfo = new CustomerBookingsResponse.CustomerInfo(
+                customer.getId(),
+                customer.getName(),
+                customer.getEmail(),
+                customer.getPhone()
+        );
+        
+        // Trả về response
+        return new CustomerBookingsResponse(bookingDTOs, customerInfo);
+    }
+    
+    /**
      * Cập nhật status của booking
      */
     public BookingDTO updateBookingStatus(Long id, String newStatus) {
@@ -109,6 +138,28 @@ public class AdminBookingService {
         homestayOpt.ifPresent(homestay -> {
             dto.setHomestayName(homestay.getName());
             dto.setHomestayCity(homestay.getCity());
+            dto.setHomestayAddress(homestay.getAddress());
+            dto.setHomestayCapacity(homestay.getCapacity() != null ? homestay.getCapacity().intValue() : null);
+            dto.setHomestayNumRooms(homestay.getNumRooms() != null ? homestay.getNumRooms().intValue() : null);
+            dto.setHomestayBathroomCount(homestay.getBathroomCount() != null ? homestay.getBathroomCount().intValue() : null);
+            dto.setHomestayBasePrice(homestay.getBasePrice());
+            
+            // Lấy thông tin chủ nhà (owner) từ homestay.userId
+            Long ownerId = homestay.getUserId();
+            if (ownerId != null) {
+                try {
+                    Optional<User> ownerOpt = userRepository.findById(ownerId);
+                    if (ownerOpt.isPresent()) {
+                        User owner = ownerOpt.get();
+                        dto.setOwnerName(owner.getName());
+                        dto.setOwnerEmail(owner.getEmail());
+                        dto.setOwnerPhone(owner.getPhone());
+                    }
+                } catch (Exception e) {
+                    // Log error but don't throw - owner info is optional
+                    System.err.println("Cannot fetch owner info for homestay " + homestay.getId() + ": " + e.getMessage());
+                }
+            }
         });
         
         return dto;

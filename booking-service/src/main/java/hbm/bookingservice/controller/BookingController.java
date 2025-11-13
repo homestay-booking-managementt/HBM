@@ -94,4 +94,57 @@ public class BookingController {
     public ResponseEntity<String> cancelUnpaidBookings() {
         return ResponseEntity.ok(bookingService.cancelUnpaidBooking());
     }
+
+    /**
+     * API lấy danh sách booking theo customer ID
+     * GET http://localhost:8082/api/v1/bookings/customer/{customerId}
+     */
+    @GetMapping("/customer/{customerId}")
+    public ResponseEntity<?> getBookingsByCustomerId(@PathVariable Long customerId) {
+        try {
+            List<BookingDto> bookings = bookingService.getBookingsByCustomerId(customerId);
+            
+            // Get customer info from first booking if available
+            java.util.Map<String, Object> customerInfo = null;
+            if (!bookings.isEmpty()) {
+                // Try to get customer info from booking detail
+                try {
+                    BookingDetailDto detail = bookingService.getBookingDetails(bookings.get(0).getBookingId(), customerId);
+                    if (detail != null && detail.getUser() != null) {
+                        customerInfo = new java.util.HashMap<>();
+                        customerInfo.put("id", detail.getUser().getUserId());
+                        customerInfo.put("name", detail.getUser().getName());
+                        customerInfo.put("email", detail.getUser().getEmail());
+                        customerInfo.put("phone", detail.getUser().getPhone());
+                    }
+                } catch (Exception e) {
+                    // If can't get detail, just skip customer info
+                    System.out.println("Could not get customer info: " + e.getMessage());
+                }
+            }
+            
+            java.util.Map<String, Object> response = new java.util.HashMap<>();
+            response.put("success", true);
+            response.put("message", "Lấy danh sách booking của khách hàng thành công");
+            response.put("data", bookings);
+            response.put("total", bookings.size());
+            response.put("customerInfo", customerInfo);
+            
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            java.util.Map<String, Object> errorResponse = new java.util.HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", e.getMessage());
+            errorResponse.put("data", null);
+            
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        } catch (Exception e) {
+            java.util.Map<String, Object> errorResponse = new java.util.HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Lỗi khi lấy danh sách booking: " + e.getMessage());
+            errorResponse.put("data", null);
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
 }

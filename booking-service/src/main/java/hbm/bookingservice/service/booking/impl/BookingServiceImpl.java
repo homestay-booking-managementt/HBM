@@ -112,7 +112,7 @@ public class BookingServiceImpl implements BookingService {
         newBooking.setTotalPrice(totalPrice);
         newBooking.setStatus(PENDING_PAYMENT.name().toLowerCase());
         newBooking.setCreatedAt(LocalDateTime.now());
-        newBooking.setPaymentDeadline(LocalDateTime.now().plusMinutes(95));
+        // Payment deadline removed - not in DB schema
         Booking savedBooking = bookingRepository.save(newBooking);
 
         CreateMomoResponse momoResponse = momoService.createPaymentUrl(savedBooking.getId());
@@ -243,16 +243,9 @@ public class BookingServiceImpl implements BookingService {
     @Transactional
     @Scheduled(fixedRate = 60000) // chạy mỗi 1 phút
     public String cancelUnpaidBooking() {
-        LocalDateTime now = LocalDateTime.now();
-        List<Booking> unpaidBookings = bookingRepository
-                .findAllByStatusAndPaymentDeadlineBefore(PENDING_PAYMENT.name().toLowerCase(), now);
-        for (Booking booking : unpaidBookings) {
-            booking.setStatus(CANCELLED.name().toLowerCase());
-            booking.setCancelledAt(now);
-            bookingRepository.save(booking);
-            log.info(" Auto-cancel booking {} due to timeout.", booking.getId());
-        }
-        return "Auto-cancelled " + unpaidBookings.size() + " unpaid bookings.";
+        // Auto-cancel feature disabled - payment_deadline column not in DB schema
+        log.info("Auto-cancel unpaid bookings feature is disabled");
+        return "Auto-cancel feature disabled";
     }
 
     @Override
@@ -376,4 +369,53 @@ public class BookingServiceImpl implements BookingService {
 
         return bookingDto;
     }
+
+    @Override
+    public List<BookingDto> getBookingsByCustomerId(Long customerId) {
+        if (customerId == null) {
+            throw new IllegalArgumentException("Customer ID không được để trống");
+        }
+        
+        List<Booking> bookings = bookingRepository.findByCustomerId(customerId);
+        
+        if (bookings.isEmpty()) {
+            return Collections.emptyList();
+        }
+        
+        // Map bookings to DTOs with homestay information
+        return bookings.stream()
+                .map(booking -> {
+                    Homestay homestay = homestayRepository.findById(booking.getHomestayId())
+                            .orElse(null);
+                    
+                    if (homestay == null) {
+                        return null;
+                    }
+                    
+                    // Create homestay summary
+                    HomestaySummaryDto homestayDto = new HomestaySummaryDto();
+                    homestayDto.setId(homestay.getId());
+                    homestayDto.setName(homestay.getName());
+                    homestayDto.setCity(homestay.getCity());
+                    // Primary image URL will be null for now
+                    // Can be fetched separately if needed
+                    homestayDto.setPrimaryImageUrl(null);
+                    
+                    // Create booking DTO
+                    BookingDto bookingDto = new BookingDto();
+                    bookingDto.setBookingId(booking.getId());
+                    bookingDto.setCheckIn(booking.getCheckIn());
+                    bookingDto.setCheckOut(booking.getCheckOut());
+                    bookingDto.setNights((int) ChronoUnit.DAYS.between(booking.getCheckIn(), booking.getCheckOut()));
+                    bookingDto.setTotalPrice(booking.getTotalPrice());
+                    bookingDto.setStatus(booking.getStatus());
+                    bookingDto.setCreatedAt(booking.getCreatedAt());
+                    bookingDto.setHomestay(homestayDto);
+                    
+                    return bookingDto;
+                })
+                .filter(dto -> dto != null)
+                .collect(Collectors.toList());
+    }
+
 }

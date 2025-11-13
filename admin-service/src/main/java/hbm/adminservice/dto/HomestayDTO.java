@@ -27,6 +27,7 @@ public class HomestayDTO {
     private BigDecimal basePrice;
     private String amenities;
     private Byte status;
+    private Boolean isUpdate; // true nếu có yêu cầu cập nhật đang chờ duyệt
     
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
@@ -36,4 +37,16 @@ public class HomestayDTO {
     
     // Danh sách ảnh của homestay
     private List<HomestayImageDTO> images;
+    
+    // Thông tin chủ nhà
+    private HostInfo host;
+    
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class HostInfo {
+        private Long id;
+        private String name;
+        private String email;
+    }
 }

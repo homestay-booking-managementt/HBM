@@ -89,6 +89,11 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             @Param("checkOut") LocalDate checkOut
     );
 
-    List<Booking> findAllByStatusAndPaymentDeadlineBefore(String status, LocalDateTime time);
+    /**
+     * Lấy danh sách booking theo customer ID (user_id)
+     * Sắp xếp theo thời gian tạo mới nhất
+     */
+    @Query(value = "SELECT * FROM booking WHERE user_id = :customerId ORDER BY created_at DESC", nativeQuery = true)
+    List<Booking> findByCustomerId(@Param("customerId") Long customerId);
 
 }

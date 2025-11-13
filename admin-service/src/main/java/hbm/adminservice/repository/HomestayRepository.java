@@ -24,4 +24,11 @@ public interface HomestayRepository extends JpaRepository<Homestay, Long> {
      */
     @Query("SELECT h FROM Homestay h WHERE h.isDeleted = false ORDER BY h.createdAt DESC")
     List<Homestay> findAllHomestaysForAdmin();
+    
+    /**
+     * Lấy danh sách homestay theo owner ID (user_id)
+     * Sắp xếp theo thời gian tạo mới nhất
+     */
+    @Query("SELECT h FROM Homestay h WHERE h.userId = :ownerId AND h.isDeleted = false ORDER BY h.createdAt DESC")
+    List<Homestay> findByOwnerId(@org.springframework.data.repository.query.Param("ownerId") Long ownerId);
 }
