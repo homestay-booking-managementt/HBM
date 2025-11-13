@@ -21,6 +21,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api")
 @Slf4j
+@CrossOrigin(origins = "http://localhost:3200")
 public class HomestayController {
     
     @Autowired
