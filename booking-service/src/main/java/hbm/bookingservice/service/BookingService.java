@@ -17,4 +17,8 @@ public interface BookingService {
     BookingDetailDto updateBookingStatusByHost(Long bookingId, Long hostId, String newStatus);
 
     BookingDetailDto cancelBookingByCustomer(Long bookingId, Long customerId, String reason);
+
+    String cancelUnpaidBooking();
+
+    String checkIn(Long bookingId);
 }
