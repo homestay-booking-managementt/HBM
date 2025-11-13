@@ -32,9 +32,19 @@ public class BookingDTO {
     private LocalDateTime createdAt;
     
     // Thông tin bổ sung từ các bảng khác
-    private String userName;      // Tên khách hàng
-    private String userEmail;     // Email khách hàng
-    private String userPhone;     // Số điện thoại khách hàng
-    private String homestayName;  // Tên homestay
-    private String homestayCity;  // Thành phố của homestay
+    private String userName;         // Tên khách hàng
+    private String userEmail;        // Email khách hàng
+    private String userPhone;        // Số điện thoại khách hàng
+    private String homestayName;     // Tên homestay
+    private String homestayCity;     // Thành phố của homestay
+    private String homestayAddress;  // Địa chỉ homestay
+    private Integer homestayCapacity;    // Sức chứa
+    private Integer homestayNumRooms;    // Số phòng ngủ
+    private Integer homestayBathroomCount; // Số phòng tắm
+    private BigDecimal homestayBasePrice;  // Giá/đêm
+    
+    // Thông tin chủ nhà (owner)
+    private String ownerName;        // Tên chủ nhà
+    private String ownerEmail;       // Email chủ nhà
+    private String ownerPhone;       // SĐT chủ nhà
 }

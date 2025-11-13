@@ -1,6 +1,7 @@
 package hbm.adminservice.controller;
 
 import hbm.adminservice.dto.BookingDTO;
+import hbm.adminservice.dto.CustomerBookingsResponse;
 import hbm.adminservice.service.AdminBookingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -56,6 +57,35 @@ public class AdminBookingController {
             errorResponse.put("data", null);
             
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+    
+    /**
+     * API lấy danh sách booking của một customer cụ thể
+     * GET http://localhost:8083/api/admin/bookings/customer/{customerId}
+     * 
+     * Response:
+     * {
+     *   "bookings": [...],
+     *   "customerInfo": {
+     *     "id": 123,
+     *     "name": "Nguyễn Văn An",
+     *     "email": "an.nguyen@example.com",
+     *     "phone": "0901111222"
+     *   }
+     * }
+     */
+    @GetMapping("/bookings/customer/{customerId}")
+    public ResponseEntity<CustomerBookingsResponse> getBookingsByCustomerId(@PathVariable Long customerId) {
+        try {
+            CustomerBookingsResponse response = adminBookingService.getBookingsByCustomerId(customerId);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            // Customer not found
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        } catch (Exception e) {
+            // Internal server error
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
     

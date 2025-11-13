@@ -84,7 +84,7 @@ public class MomoCallbackService implements PaymentCallbackService {
         Booking booking = bookingRepository.findById(payment.getBookingId())
                 .orElseThrow(() -> new IllegalStateException("Booking must exist for payment fail"));
         booking.setStatus("cancelled");
-        booking.setCancelledAt(LocalDateTime.now());
+        // Cancelled timestamp removed - not in DB schema
         bookingRepository.save(booking);
 
         log.warn("❌ Payment failed permanently for booking {}", booking.getId());

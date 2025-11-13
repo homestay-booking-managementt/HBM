@@ -21,4 +21,9 @@ public interface BookingService {
     String cancelUnpaidBooking();
 
     String checkIn(Long bookingId);
+
+    /**
+     * Lấy danh sách booking theo customer ID
+     */
+    List<BookingDto> getBookingsByCustomerId(Long customerId);
 }
