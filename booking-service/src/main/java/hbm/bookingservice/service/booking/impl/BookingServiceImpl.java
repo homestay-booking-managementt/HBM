@@ -117,7 +117,7 @@ public class BookingServiceImpl implements BookingService {
         // Payment deadline removed - not in DB schema
         Booking savedBooking = bookingRepository.save(newBooking);
 
-        CreateMomoResponse momoResponse = momoService.createPaymentUrl(savedBooking.getId());
+        CreateMomoResponse momoResponse = momoService.createPaymentUrl(savedBooking.getId(), totalPrice);
         BookingDetailDto bookingDetail = bookingMapper.toDetailDto(savedBooking, homestay, customer);
 
         return new BookingCreationResponse(bookingDetail, momoResponse);

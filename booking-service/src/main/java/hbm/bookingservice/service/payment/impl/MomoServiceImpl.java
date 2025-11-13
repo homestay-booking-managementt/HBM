@@ -33,7 +33,7 @@ public class MomoServiceImpl implements MomoService {
     private final PaymentRepository paymentRepository;
 
     @Override
-    public CreateMomoResponse createPaymentUrl(Long bookingId) {
+    public CreateMomoResponse createPaymentUrl(Long bookingId, BigDecimal amount) {
 
         // 1. Tải Booking để lấy thông tin cần thiết
         Booking booking = bookingRepository.findById(bookingId)
@@ -45,7 +45,6 @@ public class MomoServiceImpl implements MomoService {
         String extraDataValue = Base64.getEncoder().encodeToString("extra data".getBytes(StandardCharsets.UTF_8));
         String orderInfoValue = "Thanh toán đơn hàng: " + bookingId;
         String langValue = "vi"; // Giá trị cố định
-        Long amountValue = 10000L;
 
         // Đảm bảo không sử dụng các giá trị hardcode khác
         String accessKey = config.getAccessKey();
@@ -57,7 +56,7 @@ public class MomoServiceImpl implements MomoService {
         // SỬA ĐỔI: TẠO VÀ LƯU PAYMENT RECORD (Trạng thái Pending)
         Payment payment = new Payment();
         payment.setBookingId(bookingId);
-        payment.setAmount(BigDecimal.valueOf(amountValue));
+        payment.setAmount(amount);
         payment.setOrderId(orderId);             // <-- LƯU orderId
         payment.setRequestId(requestIdValue);
         // <-- LƯU requestId
@@ -73,7 +72,7 @@ public class MomoServiceImpl implements MomoService {
         // Lưu ý: Thứ tự các trường là TUYỆT ĐỐI quan trọng theo quy định của MoMo.
         String rawSignature = String.format(
                 "accessKey=%s&amount=%s&extraData=%s&ipnUrl=%s&orderId=%s&orderInfo=%s&partnerCode=%s&redirectUrl=%s&requestId=%s&requestType=%s",
-                accessKey, amountValue, extraDataValue, ipnUrl, orderId, orderInfoValue, partnerCode, redirectUrl, requestIdValue, requestType);
+                accessKey, amount.longValue(), extraDataValue, ipnUrl, orderId, orderInfoValue, partnerCode, redirectUrl, requestIdValue, requestType);
 
         // 3. TẠO SIGNATURE
         String signature = signHmacSHA256(rawSignature, config.getSecretKey());
@@ -85,7 +84,7 @@ public class MomoServiceImpl implements MomoService {
                 .ipnUrl(ipnUrl)
                 .redirectUrl(redirectUrl)
                 .orderId(orderId)
-                .amount(amountValue)
+                .amount(amount.longValue())
                 .orderInfo(orderInfoValue) // <-- Dùng biến đã tạo ở trên
                 .requestId(requestIdValue)   // <-- Dùng biến đã tạo ở trên
                 .extraData(extraDataValue)

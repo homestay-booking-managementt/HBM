@@ -21,10 +21,10 @@ public class PaymentController {
     private final MomoService momoService;
     private final PaymentService paymentService;
 
-    @PostMapping("/momo/initiate/{bookingId}")
-    public ResponseEntity<CreateMomoResponse> initiate(@PathVariable Long bookingId) {
-        return ResponseEntity.ok().body(momoService.createPaymentUrl(bookingId));
-    }
+//    @PostMapping("/momo/initiate/{bookingId}")
+//    public ResponseEntity<CreateMomoResponse> initiate(@PathVariable Long bookingId) {
+//        return ResponseEntity.ok().body(momoService.createPaymentUrl(bookingId));
+//    }
 
     @PostMapping("/momo/callback")
     @Transactional
