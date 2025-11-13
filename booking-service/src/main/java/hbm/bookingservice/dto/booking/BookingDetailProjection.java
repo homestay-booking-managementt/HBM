@@ -11,6 +11,7 @@ public interface BookingDetailProjection {
     LocalDate getCheckOut();
     BigDecimal getTotalPrice();
     String getStatus();
+    String getPaymentStatus();
     Integer getNights();        // Đã thêm
     LocalDateTime getCreatedAt();
 

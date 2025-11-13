@@ -2,7 +2,7 @@ package hbm.bookingservice.controller;
 
 import hbm.bookingservice.dto.review.ReviewCreationRequestDto;
 import hbm.bookingservice.dto.review.ReviewDto;
-import hbm.bookingservice.service.ReviewService;
+import hbm.bookingservice.service.review.ReviewService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,8 +17,6 @@ import java.util.List;
 public class ReviewController {
 
     private final ReviewService reviewService;
-
-    // Constructor injection...
 
     @PostMapping
     public ResponseEntity<ReviewDto> createReview(

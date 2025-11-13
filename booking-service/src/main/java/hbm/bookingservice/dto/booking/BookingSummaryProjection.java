@@ -11,6 +11,7 @@ public interface BookingSummaryProjection {
     Integer getNights();
     BigDecimal getTotalPrice();
     String getStatus();
+    String getPaymentStatus();
     LocalDateTime getCreatedAt();
     // --- Homestay
     Long getHomestayId();

@@ -1,4 +1,4 @@
-package hbm.bookingservice.service.impl;
+package hbm.bookingservice.service.booking.impl;
 
 import hbm.bookingservice.constant.BookingStatus;
 import hbm.bookingservice.dto.booking.*;
@@ -15,8 +15,8 @@ import hbm.bookingservice.mapper.BookingMapper;
 import hbm.bookingservice.repository.BookingRepository;
 import hbm.bookingservice.repository.HomestayRepository;
 import hbm.bookingservice.repository.UserRepository;
-import hbm.bookingservice.service.BookingService;
-import hbm.bookingservice.service.MomoService;
+import hbm.bookingservice.service.booking.BookingService;
+import hbm.bookingservice.service.payment.MomoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -340,6 +340,7 @@ public class BookingServiceImpl implements BookingService {
         detailDto.setNights(firstProjection.getNights());
         detailDto.setTotalPrice(firstProjection.getTotalPrice());
         detailDto.setStatus(firstProjection.getStatus());
+        detailDto.setPaymentStatus(firstProjection.getPaymentStatus());
         detailDto.setCreatedAt(firstProjection.getCreatedAt());
 
         // Gán các DTO lồng nhau
@@ -367,6 +368,7 @@ public class BookingServiceImpl implements BookingService {
         bookingDto.setNights(p.getNights());
         bookingDto.setTotalPrice(p.getTotalPrice());
         bookingDto.setStatus(p.getStatus());
+        bookingDto.setPaymentStatus(p.getPaymentStatus());
         bookingDto.setCreatedAt(p.getCreatedAt());
 
         // Gán Homestay Summary DTO

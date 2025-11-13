@@ -1,4 +1,4 @@
-package hbm.bookingservice.service;
+package hbm.bookingservice.service.booking;
 
 import hbm.bookingservice.dto.booking.BookingCreationRequestDto;
 import hbm.bookingservice.dto.booking.BookingCreationResponse;

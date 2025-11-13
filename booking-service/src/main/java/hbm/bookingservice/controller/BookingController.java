@@ -2,7 +2,7 @@ package hbm.bookingservice.controller;
 
 import hbm.bookingservice.dto.booking.*;
 import hbm.bookingservice.dto.user.CustomerBookingCancelDto;
-import hbm.bookingservice.service.BookingService;
+import hbm.bookingservice.service.booking.BookingService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
