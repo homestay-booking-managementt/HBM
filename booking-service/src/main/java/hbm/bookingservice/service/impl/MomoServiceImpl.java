@@ -9,26 +9,16 @@ import hbm.bookingservice.entity.Payment;
 import hbm.bookingservice.repository.BookingRepository;
 import hbm.bookingservice.repository.PaymentRepository;
 import hbm.bookingservice.service.MomoService;
-import jakarta.xml.bind.DatatypeConverter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
-
-import static javax.xml.crypto.dsig.SignatureMethod.HMAC_SHA256;
 
 @Service
 @RequiredArgsConstructor
