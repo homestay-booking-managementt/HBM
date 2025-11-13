@@ -1,6 +1,7 @@
 package hbm.bookingservice.service;
 
 import hbm.bookingservice.dto.booking.BookingCreationRequestDto;
+import hbm.bookingservice.dto.booking.BookingCreationResponse;
 import hbm.bookingservice.dto.booking.BookingDetailDto;
 import hbm.bookingservice.dto.booking.BookingDto;
 
@@ -11,7 +12,7 @@ public interface BookingService {
 
     BookingDetailDto getBookingDetails(Long bookingId, Long userId);
 
-    BookingDetailDto createBooking(BookingCreationRequestDto bookingDto);
+    BookingCreationResponse createBooking(BookingCreationRequestDto bookingDto);
 
     BookingDetailDto updateBookingStatusByHost(Long bookingId, Long hostId, String newStatus);
 

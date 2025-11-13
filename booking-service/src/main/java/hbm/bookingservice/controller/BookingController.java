@@ -1,9 +1,6 @@
 package hbm.bookingservice.controller;
 
-import hbm.bookingservice.dto.booking.BookingCreationRequestDto;
-import hbm.bookingservice.dto.booking.BookingDetailDto;
-import hbm.bookingservice.dto.booking.BookingDto;
-import hbm.bookingservice.dto.booking.BookingStatusUpdateDto;
+import hbm.bookingservice.dto.booking.*;
 import hbm.bookingservice.dto.user.CustomerBookingCancelDto;
 import hbm.bookingservice.service.BookingService;
 import jakarta.validation.Valid;
@@ -13,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@CrossOrigin(origins = "http://localhost:3200")
 @RestController
 @RequestMapping("/api/v1/bookings")
 public class BookingController {
@@ -51,11 +49,11 @@ public class BookingController {
     }
 
     @PostMapping
-    public ResponseEntity<BookingDetailDto> createBooking(
+    public ResponseEntity<BookingCreationResponse> createBooking(
             @Valid @RequestBody BookingCreationRequestDto requestDto) {
 
         try {
-            BookingDetailDto newBooking = bookingService.createBooking(requestDto);
+            BookingCreationResponse newBooking = bookingService.createBooking(requestDto);
 
             // Trả về 201 Created
             return new ResponseEntity<>(newBooking, HttpStatus.CREATED);

@@ -5,6 +5,7 @@ import hbm.bookingservice.dto.booking.*;
 import hbm.bookingservice.dto.homestay.HomestayDetailDto;
 import hbm.bookingservice.dto.homestay.HomestayImageDto;
 import hbm.bookingservice.dto.homestay.HomestaySummaryDto;
+import hbm.bookingservice.dto.payment.CreateMomoResponse;
 import hbm.bookingservice.dto.user.UserDetailSummaryDto;
 import hbm.bookingservice.entity.Booking;
 import hbm.bookingservice.entity.Homestay;
@@ -15,10 +16,12 @@ import hbm.bookingservice.repository.BookingRepository;
 import hbm.bookingservice.repository.HomestayRepository;
 import hbm.bookingservice.repository.UserRepository;
 import hbm.bookingservice.service.BookingService;
-import jakarta.transaction.Transactional;
+import hbm.bookingservice.service.MomoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -37,6 +40,7 @@ public class BookingServiceImpl implements BookingService {
     private final BookingMapper bookingMapper;
     private final HomestayRepository homestayRepository;
     private final UserRepository userRepository;
+    private final MomoService momoService;
 
     @Override
     public List<BookingDto> getMyBookings(Long userId) {
@@ -63,56 +67,54 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    @Transactional
-    public BookingDetailDto createBooking(BookingCreationRequestDto requestDto) {
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public BookingCreationResponse createBooking(BookingCreationRequestDto requestDto) {
+        // Validate dates
         if (requestDto.getCheckIn().isAfter(requestDto.getCheckOut())
                 || requestDto.getCheckIn().isEqual(requestDto.getCheckOut())) {
             throw new IllegalArgumentException("Check-out date must be after check-in date.");
         }
 
-        // 1. Tải Homestay và kiểm tra tồn tại
+        // 1. LOCK TẤT CẢ BOOKING CONFLICT TRƯỚC
+        List<Booking> conflictingBookings = bookingRepository.findConflictingBookingsWithLock(
+                requestDto.getHomestayId(),
+                requestDto.getCheckIn(),
+                requestDto.getCheckOut()
+        );
+
+        if (!conflictingBookings.isEmpty()) {
+            throw new IllegalArgumentException("Homestay is already booked for the requested period.");
+        }
+
+        // 2. Load Homestay và User
         Homestay homestay = homestayRepository.findById(requestDto.getHomestayId())
                 .orElseThrow(() -> new IllegalArgumentException("Homestay not found."));
 
-        // 2. Tải User (Customer) để chuẩn bị cho mapping trả về
         User customer = userRepository.findById(requestDto.getUserId())
                 .orElseThrow(() -> new IllegalArgumentException("Customer not found."));
 
-        // 3. Tính toán Tổng giá và Nights
+        // 3. Calculate price
         long nights = ChronoUnit.DAYS.between(requestDto.getCheckIn(), requestDto.getCheckOut());
         if (nights <= 0) {
             throw new IllegalArgumentException("Number of nights must be greater than zero.");
         }
+        BigDecimal totalPrice = homestay.getBasePrice().multiply(BigDecimal.valueOf(nights));
 
-        BigDecimal basePrice = homestay.getBasePrice(); // Nên dùng giá từ Entity
-        BigDecimal totalPrice = basePrice.multiply(BigDecimal.valueOf(nights));
-
-        // 4. KIỂM TRA TRÙNG LỊCH
-        Long conflictingBookingsCount = bookingRepository.countConflictingConfirmedBookings(
-                requestDto.getHomestayId(),
-                requestDto.getCheckIn(),
-                requestDto.getCheckOut(),
-                null); // null vì đây là booking mới
-
-        if (conflictingBookingsCount > 0) {
-            throw new IllegalArgumentException("Homestay is already booked and confirmed for the requested period.");
-        }
-
-        // 5. Tạo và Lưu Entity Booking
+        // 4. Create booking
         Booking newBooking = new Booking();
         newBooking.setUserId(requestDto.getUserId());
         newBooking.setHomestayId(requestDto.getHomestayId());
         newBooking.setCheckIn(requestDto.getCheckIn());
         newBooking.setCheckOut(requestDto.getCheckOut());
         newBooking.setTotalPrice(totalPrice);
-        newBooking.setStatus("pending"); // Trạng thái ban đầu
+        newBooking.setStatus("pending_payment");
         newBooking.setCreatedAt(LocalDateTime.now());
-
         Booking savedBooking = bookingRepository.save(newBooking);
 
-        // 6. Ánh xạ sang BookingDetailDto đầy đủ (Booking, Homestay Entity, User
-        // Entity)
-        return bookingMapper.toDetailDto(savedBooking, homestay, customer);
+        CreateMomoResponse momoResponse = momoService.createPaymentUrl(savedBooking.getId());
+        BookingDetailDto bookingDetail = bookingMapper.toDetailDto(savedBooking, homestay, customer);
+
+        return new BookingCreationResponse(bookingDetail, momoResponse);
     }
 
     @Override

@@ -3,7 +3,9 @@ package hbm.bookingservice.repository;
 import hbm.bookingservice.dto.booking.BookingDetailProjection;
 import hbm.bookingservice.dto.booking.BookingSummaryProjection;
 import hbm.bookingservice.entity.Booking;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -57,7 +59,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     SELECT COUNT(b.id)
     FROM Booking b
     WHERE b.homestayId = :homestayId
-      AND b.status IN ('CONFIRMED', 'COMPLETED')
+      AND b.status IN ('pending_payment', 'confirmed', 'completed')
       AND b.id != :currentBookingId
       AND (
           (b.checkIn < :checkOut AND b.checkOut > :checkIn)
@@ -68,5 +70,18 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             @Param("checkIn") LocalDate checkIn,
             @Param("checkOut") LocalDate checkOut,
             @Param("currentBookingId") Long currentBookingId
+    );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+    SELECT b FROM Booking b
+    WHERE b.homestayId = :homestayId
+      AND b.status IN ('pending_payment', 'confirmed', 'completed')
+      AND (b.checkIn < :checkOut AND b.checkOut > :checkIn)
+    """)
+    List<Booking> findConflictingBookingsWithLock(
+            @Param("homestayId") Long homestayId,
+            @Param("checkIn") LocalDate checkIn,
+            @Param("checkOut") LocalDate checkOut
     );
 }

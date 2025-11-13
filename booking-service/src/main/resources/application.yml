@@ -1,0 +1,39 @@
+spring:
+  application:
+    name: homestay-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/HomestayBooking?createDatabaseIfNotExist=true
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+  flyway:
+    enabled: false
+
+
+server:
+  port: 8084
+  error:
+    include-message: always
+    include-binding-errors: always
+
+momo:
+  partner-code: MOMO
+  access-key: F8BBA842ECF85
+  secret-key: K951B6PE1waDMi640xX08PD3vg6EkVlz
+  endpoint: https://test-payment.momo.vn/v2/gateway/api
+  redirect-url: http://localhost:3200/payment-success
+  ipn-url: https://restrainedly-pseudoepiscopal-shoshana.ngrok-free.dev/api/v1/payments/momo/callback
+  request-type: captureWallet
+
