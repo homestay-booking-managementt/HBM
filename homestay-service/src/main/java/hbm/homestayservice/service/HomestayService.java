@@ -295,4 +295,18 @@ public class HomestayService {
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy homestay với ID: " + homestayId));
         return convertToDTO(homestay);
     }
+    
+    /**
+     * Lấy danh sách homestays theo owner ID (cho Host Dashboard)
+     */
+    public List<HomestayDTO> getHomestaysByOwnerId(Long ownerId) {
+        if (ownerId == null) {
+            throw new IllegalArgumentException("Owner ID không được để trống");
+        }
+        
+        List<Homestay> homestays = homestayRepository.findByUserIdAndIsDeletedFalse(ownerId);
+        return homestays.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
 }
