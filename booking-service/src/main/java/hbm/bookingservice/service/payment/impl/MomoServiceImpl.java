@@ -62,8 +62,6 @@ public class MomoServiceImpl implements MomoService {
         // <-- LƯU requestId
         payment.setStatus("pending");
         payment.setMethod("momo");
-        paymentRepository.save(payment);
-
         // Cập nhật booking status (nếu cần)
         booking.setStatus("pending_payment");
         bookingRepository.save(booking);
@@ -92,7 +90,13 @@ public class MomoServiceImpl implements MomoService {
                 .lang(langValue)             // <-- Thêm lang
                 .build();
 
-        return momoClient.createMomoQR(request);
+        CreateMomoResponse momoResponse = momoClient.createMomoQR(request);
+
+        // 🔥 LƯU PAY URL SAU KHI GỌI MOMO
+        payment.setPayUrl(momoResponse.getPayUrl());
+        paymentRepository.save(payment);
+
+        return momoResponse;
     }
 
     public String signHmacSHA256(String rawSignature, String secretKey) {
