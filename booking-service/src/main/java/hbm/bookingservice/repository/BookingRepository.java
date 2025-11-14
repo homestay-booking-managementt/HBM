@@ -127,7 +127,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
         JOIN homestay h ON b.homestay_id = h.id
         LEFT JOIN payment p ON b.id = p.booking_id
         WHERE h.user_id = :hostId
-        AND (b.status = 'confirmed' OR p.status = 'success')
+        AND (b.status IN ('confirmed', 'completed') OR p.status = 'success')
         AND b.check_out >= :startDate
         AND b.check_out <= :endDate
     """, nativeQuery = true)
@@ -148,7 +148,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
         JOIN homestay h ON b.homestay_id = h.id
         LEFT JOIN payment p ON b.id = p.booking_id
         WHERE h.user_id = :hostId
-        AND (b.status = 'confirmed' OR p.status = 'success')
+        AND (b.status IN ('confirmed', 'completed') OR p.status = 'success')
         GROUP BY h.id, h.name
         ORDER BY totalRevenue DESC
     """, nativeQuery = true)
@@ -171,7 +171,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
         JOIN homestay h ON b.homestay_id = h.id
         LEFT JOIN payment p ON b.id = p.booking_id
         WHERE h.user_id = :hostId
-        AND (b.status = 'confirmed' OR p.status = 'success')
+        AND (b.status IN ('confirmed', 'completed') OR p.status = 'success')
         AND b.check_out >= :startDate
         AND b.check_out <= :endDate
         GROUP BY WEEK(b.check_out, 1)
@@ -197,7 +197,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
         JOIN homestay h ON b.homestay_id = h.id
         LEFT JOIN payment p ON b.id = p.booking_id
         WHERE h.user_id = :hostId
-        AND (b.status = 'confirmed' OR p.status = 'success')
+        AND (b.status IN ('confirmed', 'completed') OR p.status = 'success')
         AND b.check_out >= :startDate
         AND b.check_out <= :endDate
         GROUP BY MONTH(b.check_out)
