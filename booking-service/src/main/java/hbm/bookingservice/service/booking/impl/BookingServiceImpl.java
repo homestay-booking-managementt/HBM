@@ -1,6 +1,6 @@
 package hbm.bookingservice.service.booking.impl;
 
-import hbm.bookingservice.constant.BookingStatus;
+import hbm.bookingservice.constants.BookingStatus;
 import hbm.bookingservice.dto.booking.*;
 import hbm.bookingservice.dto.homestay.HomestayDetailDto;
 import hbm.bookingservice.dto.homestay.HomestayImageDto;
@@ -30,6 +30,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static hbm.bookingservice.constants.BookingStatus.*;
@@ -146,7 +147,7 @@ public class BookingServiceImpl implements BookingService {
         BookingStatus newStatus = BookingStatus.valueOf(newStatusStr.toUpperCase());
 
         // * Chỉ xử lý khi đang ở PENDING *
-        if (oldStatus != BookingStatus.PENDING) {
+        if (oldStatus != PENDING_PAYMENT) {
             throw new IllegalArgumentException("Booking is not in PENDING status. Current status: " + oldStatus);
         }
 
@@ -344,6 +345,7 @@ public class BookingServiceImpl implements BookingService {
         detailDto.setTotalPrice(firstProjection.getTotalPrice());
         detailDto.setStatus(firstProjection.getStatus());
         detailDto.setPaymentStatus(firstProjection.getPaymentStatus());
+        detailDto.setPayUrl(firstProjection.getPayUrl());
         detailDto.setCreatedAt(firstProjection.getCreatedAt());
 
         // Gán các DTO lồng nhau
@@ -424,7 +426,7 @@ public class BookingServiceImpl implements BookingService {
                     
                     return bookingDto;
                 })
-                .filter(dto -> dto != null)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 

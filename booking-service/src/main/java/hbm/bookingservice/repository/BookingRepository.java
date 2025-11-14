@@ -48,7 +48,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query(value = """
     SELECT
         b.id AS bookingId, b.check_in AS checkIn, b.check_out AS checkOut,
-        b.total_price AS totalPrice, b.status AS status, p.status AS paymentStatus, b.nights AS nights, b.created_at AS createdAt,
+        b.total_price AS totalPrice, b.status AS status, p.status AS paymentStatus,p.pay_url as payUrl,
+        b.nights AS nights, b.created_at AS createdAt,
         h.id AS homestayId, h.name AS homestayName, h.description AS description,
         h.address AS address, h.city AS city, h.lat AS lat, h.long AS longVal,
         h.base_price AS basePrice, h.amenities AS amenities,

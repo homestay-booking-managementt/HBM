@@ -35,4 +35,6 @@ public class Payment {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    private String payUrl;
 }
