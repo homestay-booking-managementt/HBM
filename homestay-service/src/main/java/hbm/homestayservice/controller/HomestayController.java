@@ -254,4 +254,28 @@ public class HomestayController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
         }
     }
+    
+    /**
+     * API lấy danh sách homestay của host (cho Dashboard)
+     * GET http://localhost:8081/api/v1/homestays/my-homestays
+     * 
+     * Header:
+     * - X-User-Id: ID của host (bắt buộc)
+     */
+    @GetMapping("/v1/homestays/my-homestays")
+    public ResponseEntity<List<HomestayDTO>> getMyHomestaysForDashboard(
+            @RequestHeader("X-User-Id") Long userId
+    ) {
+        try {
+            log.info("GET /api/v1/homestays/my-homestays - userId: {}", userId);
+            List<HomestayDTO> homestays = homestayService.getHomestaysByOwnerId(userId);
+            return ResponseEntity.ok(homestays);
+        } catch (IllegalArgumentException e) {
+            log.error("Error getting homestays for owner: {}", userId, e);
+            throw e;
+        } catch (Exception e) {
+            log.error("Error getting homestays for owner: {}", userId, e);
+            throw e;
+        }
+    }
 }

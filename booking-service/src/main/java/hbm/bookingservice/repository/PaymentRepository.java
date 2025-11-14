@@ -1,5 +1,6 @@
 package hbm.bookingservice.repository;
 
+import hbm.bookingservice.dto.host.PaymentStatusCount;
 import hbm.bookingservice.dto.payment.PaymentHistoryDto;
 import hbm.bookingservice.entity.Payment;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -34,4 +35,19 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     ORDER BY p.created_at DESC;
     """, nativeQuery = true)
     List<PaymentHistoryDto> getPaymentHistoryByUserId(@Param("userId") Long userId);
+    
+    // Host Dashboard Methods
+    
+    /**
+     * Đếm payment theo trạng thái cho host
+     */
+    @Query("""
+        SELECT p.status as status, COUNT(p.id) as count
+        FROM Payment p
+        JOIN Booking b ON p.bookingId = b.id
+        JOIN Homestay h ON b.homestayId = h.id
+        WHERE h.userId = :hostId
+        GROUP BY p.status
+    """)
+    List<PaymentStatusCount> countPaymentsByStatusForHost(@Param("hostId") Long hostId);
 }

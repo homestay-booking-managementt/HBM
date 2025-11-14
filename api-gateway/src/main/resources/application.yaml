@@ -21,3 +21,9 @@ spring:
           uri: http://localhost:8081
           predicates:
             - Path=/api/v1/user/**
+
+        # Host Dashboard APIs - Booking Service
+        - id: host-dashboard
+          uri: http://localhost:8084
+          predicates:
+            - Path=/api/v1/host/dashboard/**

@@ -41,4 +41,9 @@ public interface HomestayRepository extends JpaRepository<Homestay, Long> {
      */
     @Query("SELECT h FROM Homestay h WHERE h.status = 2 AND h.isDeleted = false")
     List<Homestay> findAllPublicSimple();
+    
+    /**
+     * Lấy danh sách homestay theo owner ID (không bao gồm đã xóa)
+     */
+    List<Homestay> findByUserIdAndIsDeletedFalse(Long userId);
 }
